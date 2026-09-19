@@ -581,11 +581,6 @@ async function updateSpotify() {
         : "PAUSED";
 
 
-    /*
-    Update album artwork only when
-    the URL actually changes.
-    */
-
     if (
       data.artUrl &&
       spotifyArt.src !==
@@ -617,8 +612,7 @@ async function updateSpotify() {
 
 
 /*
-Refresh Spotify metadata approximately
-every 1.5 seconds.
+Refresh Spotify metadata every 1.5 seconds.
 */
 
 setInterval(
@@ -655,11 +649,6 @@ function updateSpotifyProgress() {
   let position =
     spotifyState.positionMs;
 
-
-  /*
-  Move the timer locally while playing
-  instead of calling playerctl every frame.
-  */
 
   if (
     spotifyState.isPlaying
@@ -852,6 +841,24 @@ startButton.onclick =
       );
 
 
+    /*
+    Smoothed copy of waveform.
+
+    This is used only for drawing and makes
+    the sine wave move more gently.
+    */
+
+    const smoothWaveform =
+      new Float32Array(
+        analyser.fftSize
+      );
+
+
+    smoothWaveform.fill(
+      128
+    );
+
+
     const spectrum =
       new Uint8Array(
         analyser.frequencyBinCount
@@ -892,6 +899,21 @@ startButton.onclick =
 
     const barFallSpeed =
       0.18;
+
+
+    /*
+    ==================================================
+    WAVEFORM SETTINGS
+    ==================================================
+
+    Smaller number = calmer/slower.
+    Larger number = faster/more responsive.
+
+    0.10 gives a smooth, relaxed waveform.
+    */
+
+    const waveformSpeed =
+      0.10;
 
 
     /*
@@ -1154,7 +1176,7 @@ startButton.onclick =
 
       /*
       ==================================================
-      WAVEFORM
+      CALMER OSCILLOSCOPE WAVEFORM
       ==================================================
       */
 
@@ -1163,15 +1185,29 @@ startButton.onclick =
         0.30;
 
 
+      /*
+      Reduced bass expansion.
+
+      Previously the divisor was much smaller,
+      which caused bass hits to make the waveform
+      expand dramatically.
+      */
+
       const amplitudeBoost =
         1 +
         smoothBass /
-        150;
+        350;
 
+
+      /*
+      Reduced overall waveform height.
+
+      0.14 instead of ~0.22.
+      */
 
       const amplitude =
         canvas.height *
-        0.22 *
+        0.14 *
         amplitudeBoost;
 
 
@@ -1180,16 +1216,24 @@ startButton.onclick =
         waveform.length;
 
 
-      const glow =
-        12 +
-        smoothMids /
-        2.5;
+      /*
+      Reduced glow.
+      */
 
+      const glow =
+        8 +
+        smoothMids /
+        4;
+
+
+      /*
+      Reduced line thickness.
+      */
 
       ctx.lineWidth =
-        2.5 +
+        2.0 +
         smoothBass /
-        140;
+        300;
 
 
       ctx.strokeStyle =
@@ -1217,9 +1261,25 @@ startButton.onclick =
       ) {
 
 
-        const normalized =
+        /*
+        Slowly move the displayed waveform
+        toward the actual incoming waveform.
+
+        This makes it feel smoother and
+        much less frantic.
+        */
+
+        smoothWaveform[i] +=
           (
             waveform[i] -
+            smoothWaveform[i]
+          ) *
+          waveformSpeed;
+
+
+        const normalized =
+          (
+            smoothWaveform[i] -
             128
           ) /
           128;
@@ -1259,12 +1319,17 @@ startButton.onclick =
       ctx.stroke();
 
 
+      /*
+      Thin bright line layered over
+      the glowing waveform.
+      */
+
       ctx.shadowBlur =
         0;
 
 
       ctx.lineWidth =
-        1;
+        0.8;
 
 
       ctx.strokeStyle =
@@ -1571,7 +1636,7 @@ startButton.onclick =
 
         /*
         ==================================================
-        COLOR
+        BAR COLOR
         ==================================================
         */
 
@@ -1615,7 +1680,7 @@ startButton.onclick =
 
         /*
         ==================================================
-        POSITION
+        BAR POSITION
         ==================================================
         */
 
