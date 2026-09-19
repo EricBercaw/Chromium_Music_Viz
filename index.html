@@ -40,6 +40,12 @@ canvas {
 }
 
 
+/*
+==================================================
+START BUTTON
+==================================================
+*/
+
 #start {
 
   position: fixed;
@@ -54,7 +60,7 @@ canvas {
 
   font-size: 20px;
 
-  z-index: 10;
+  z-index: 50;
 
   cursor: pointer;
 
@@ -63,7 +69,97 @@ canvas {
 
 /*
 ==================================================
-SPOTIFY NOW PLAYING WINDOW
+APPLE TV CAST BUTTON
+==================================================
+*/
+
+#cast-button {
+
+  position: fixed;
+
+  top: 22px;
+
+  left: 22px;
+
+  z-index: 40;
+
+  padding:
+    11px 17px;
+
+  color: white;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 14px;
+
+  background:
+    rgba(
+      0,
+      0,
+      0,
+      0.72
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.30
+    );
+
+  border-radius:
+    10px;
+
+  cursor:
+    pointer;
+
+  backdrop-filter:
+    blur(12px);
+
+  transition:
+    background 0.2s,
+    border 0.2s;
+
+}
+
+
+#cast-button:hover {
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.16
+    );
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.55
+    );
+
+}
+
+
+#cast-button:disabled {
+
+  opacity:
+    0.6;
+
+}
+
+
+/*
+==================================================
+SPOTIFY NOW PLAYING
 ==================================================
 */
 
@@ -111,21 +207,13 @@ SPOTIFY NOW PLAYING WINDOW
       0.22
     );
 
-  border-radius: 14px;
+  border-radius:
+    14px;
 
   backdrop-filter:
     blur(14px);
 
-  z-index: 20;
-
-  box-shadow:
-    0 0 24px
-    rgba(
-      255,
-      255,
-      255,
-      0.08
-    );
+  z-index: 30;
 
 }
 
@@ -284,9 +372,20 @@ SPOTIFY NOW PLAYING WINDOW
 <body>
 
 
-<!-- ==============================================
-SPOTIFY WINDOW
-============================================== -->
+<!-- =============================================
+APPLE TV
+============================================= -->
+
+<button id="cast-button">
+
+  Cast to Apple TV
+
+</button>
+
+
+<!-- =============================================
+SPOTIFY
+============================================= -->
 
 <div id="spotify-panel">
 
@@ -295,22 +394,34 @@ SPOTIFY WINDOW
     alt="Album artwork"
   >
 
+
   <div id="spotify-info">
 
     <div id="spotify-status">
+
       NOW PLAYING
+
     </div>
+
 
     <div id="spotify-title">
+
       Song
+
     </div>
+
 
     <div id="spotify-artist">
+
       Artist
+
     </div>
 
+
     <div id="spotify-album">
+
       Album
+
     </div>
 
 
@@ -326,11 +437,16 @@ SPOTIFY WINDOW
     <div id="spotify-time">
 
       <span id="spotify-position">
+
         0:00
+
       </span>
 
+
       <span id="spotify-duration">
+
         0:00
+
       </span>
 
     </div>
@@ -340,8 +456,14 @@ SPOTIFY WINDOW
 </div>
 
 
+<!-- =============================================
+START
+============================================= -->
+
 <button id="start">
+
   Start Visualizer
+
 </button>
 
 
@@ -393,6 +515,185 @@ window.addEventListener(
 
 
 resize();
+
+
+/*
+==================================================
+APPLE TV CASTING
+==================================================
+*/
+
+const castButton =
+  document.getElementById(
+    "cast-button"
+  );
+
+
+let isCasting =
+  false;
+
+
+async function refreshCastStatus() {
+
+  if (
+    !window.casting
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    const result =
+      await window.casting
+        .status();
+
+
+    if (
+      result.status ===
+      "starting"
+    ) {
+
+      isCasting =
+        true;
+
+
+      castButton.textContent =
+        "Connecting...";
+
+
+    } else if (
+      result.status ===
+      "casting"
+    ) {
+
+      isCasting =
+        true;
+
+
+      castButton.textContent =
+        "Stop Casting";
+
+
+    } else {
+
+      isCasting =
+        false;
+
+
+      castButton.textContent =
+        "Cast to Apple TV";
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Cast status error:",
+      error
+    );
+
+  }
+
+}
+
+
+castButton.addEventListener(
+  "click",
+  async () => {
+
+    if (
+      !window.casting
+    ) {
+
+      return;
+
+    }
+
+
+    castButton.disabled =
+      true;
+
+
+    try {
+
+
+      if (
+        isCasting
+      ) {
+
+        castButton.textContent =
+          "Stopping...";
+
+
+        await window.casting
+          .stop();
+
+
+        isCasting =
+          false;
+
+
+        castButton.textContent =
+          "Cast to Apple TV";
+
+
+      } else {
+
+        castButton.textContent =
+          "Connecting...";
+
+
+        await window.casting
+          .start();
+
+
+        isCasting =
+          true;
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "Casting error:",
+        error
+      );
+
+
+      isCasting =
+        false;
+
+
+      castButton.textContent =
+        "Cast Failed";
+
+    }
+
+
+    castButton.disabled =
+      false;
+
+
+    setTimeout(
+      refreshCastStatus,
+      500
+    );
+
+  }
+);
+
+
+setInterval(
+  refreshCastStatus,
+  1500
+);
+
+
+refreshCastStatus();
 
 
 /*
@@ -461,7 +762,9 @@ SPOTIFY STATE
 ==================================================
 */
 
-let spotifyState = null;
+let spotifyState =
+  null;
+
 
 let spotifySyncTime =
   performance.now();
@@ -481,21 +784,25 @@ function formatTime(ms) {
 
   const seconds =
     Math.floor(
-      ms / 1000
+      ms /
+      1000
     );
 
 
   const minutes =
     Math.floor(
-      seconds / 60
+      seconds /
+      60
     );
 
 
   const remaining =
-    seconds % 60;
+    seconds %
+    60;
 
 
   return (
+
     minutes +
     ":" +
     String(
@@ -504,6 +811,7 @@ function formatTime(ms) {
       2,
       "0"
     )
+
   );
 
 }
@@ -511,7 +819,7 @@ function formatTime(ms) {
 
 /*
 ==================================================
-GET SPOTIFY INFORMATION
+UPDATE SPOTIFY
 ==================================================
 */
 
@@ -541,15 +849,18 @@ async function updateSpotify() {
       spotifyPanel.style.display =
         "none";
 
+
       spotifyState =
         null;
+
 
       return;
 
     }
 
 
-    spotifyState = data;
+    spotifyState =
+      data;
 
 
     spotifySyncTime =
@@ -584,7 +895,7 @@ async function updateSpotify() {
     if (
       data.artUrl &&
       spotifyArt.src !==
-        data.artUrl
+      data.artUrl
     ) {
 
       spotifyArt.src =
@@ -610,10 +921,6 @@ async function updateSpotify() {
 
 }
 
-
-/*
-Refresh Spotify metadata every 1.5 seconds.
-*/
 
 setInterval(
   updateSpotify,
@@ -655,6 +962,7 @@ function updateSpotifyProgress() {
   ) {
 
     position +=
+
       performance.now() -
       spotifySyncTime;
 
@@ -663,27 +971,37 @@ function updateSpotifyProgress() {
 
   position =
     Math.max(
+
       0,
+
       Math.min(
         position,
         spotifyState.durationMs
       )
+
     );
 
 
   const percentage =
+
     spotifyState.durationMs > 0
 
-      ? (
-          position /
-          spotifyState.durationMs
-        ) * 100
+      ?
 
-      : 0;
+      (
+        position /
+        spotifyState.durationMs
+      ) *
+      100
+
+      :
+
+      0;
 
 
   spotifyProgressFill.style.width =
-    percentage + "%";
+    percentage +
+    "%";
 
 
   spotifyPosition.textContent =
@@ -728,15 +1046,20 @@ startButton.onclick =
 
           audio: {
 
-            channelCount: 1,
+            channelCount:
+              1,
 
-            sampleRate: 48000,
+            sampleRate:
+              48000,
 
-            echoCancellation: false,
+            echoCancellation:
+              false,
 
-            noiseSuppression: false,
+            noiseSuppression:
+              false,
 
-            autoGainControl: false
+            autoGainControl:
+              false
 
           }
 
@@ -746,7 +1069,8 @@ startButton.onclick =
     const audioContext =
       new AudioContext({
 
-        sampleRate: 48000
+        sampleRate:
+          48000
 
       });
 
@@ -841,13 +1165,6 @@ startButton.onclick =
       );
 
 
-    /*
-    Smoothed copy of waveform.
-
-    This is used only for drawing and makes
-    the sine wave move more gently.
-    */
-
     const smoothWaveform =
       new Float32Array(
         analyser.fftSize
@@ -868,13 +1185,26 @@ startButton.onclick =
     startButton.remove();
 
 
-    let smoothBass = 0;
+    /*
+    ==================================================
+    GLOBAL SMOOTHING
+    ==================================================
+    */
 
-    let smoothMids = 0;
+    let smoothBass =
+      0;
 
-    let smoothTreble = 0;
 
-    let huePosition = 0;
+    let smoothMids =
+      0;
+
+
+    let smoothTreble =
+      0;
+
+
+    let huePosition =
+      0;
 
 
     /*
@@ -890,7 +1220,9 @@ startButton.onclick =
     const smoothBars =
       new Array(
         barCount
-      ).fill(0);
+      ).fill(
+        0
+      );
 
 
     const barRiseSpeed =
@@ -906,10 +1238,10 @@ startButton.onclick =
     WAVEFORM SETTINGS
     ==================================================
 
-    Smaller number = calmer/slower.
-    Larger number = faster/more responsive.
+    Lower = calmer.
 
-    0.10 gives a smooth, relaxed waveform.
+    0.10 provides smoother movement
+    than the original waveform.
     */
 
     const waveformSpeed =
@@ -922,7 +1254,9 @@ startButton.onclick =
     ==================================================
     */
 
-    function frequencyToBin(freq) {
+    function frequencyToBin(
+      freq
+    ) {
 
       const nyquist =
         audioContext.sampleRate /
@@ -942,7 +1276,7 @@ startButton.onclick =
 
     /*
     ==================================================
-    DRAW
+    DRAW LOOP
     ==================================================
     */
 
@@ -968,7 +1302,7 @@ startButton.onclick =
 
       /*
       ==================================================
-      AUDIO ENERGY
+      FREQUENCY ENERGY
       ==================================================
       */
 
@@ -996,12 +1330,21 @@ startButton.onclick =
         );
 
 
-      let bass = 0;
+      let bass =
+        0;
 
-      let mids = 0;
 
-      let treble = 0;
+      let mids =
+        0;
 
+
+      let treble =
+        0;
+
+
+      /*
+      Bass.
+      */
 
       for (
         let i = bassStart;
@@ -1017,11 +1360,18 @@ startButton.onclick =
 
       bass /=
         Math.max(
+
           1,
+
           bassEnd -
           bassStart
+
         );
 
+
+      /*
+      Mids.
+      */
 
       for (
         let i = bassEnd;
@@ -1037,11 +1387,18 @@ startButton.onclick =
 
       mids /=
         Math.max(
+
           1,
+
           midEnd -
           bassEnd
+
         );
 
+
+      /*
+      Treble.
+      */
 
       for (
         let i = midEnd;
@@ -1057,13 +1414,21 @@ startButton.onclick =
 
       treble /=
         Math.max(
+
           1,
+
           trebleEnd -
           midEnd
+
         );
 
 
+      /*
+      Smooth energy.
+      */
+
       smoothBass +=
+
         (
           bass -
           smoothBass
@@ -1072,6 +1437,7 @@ startButton.onclick =
 
 
       smoothMids +=
+
         (
           mids -
           smoothMids
@@ -1080,6 +1446,7 @@ startButton.onclick =
 
 
       smoothTreble +=
+
         (
           treble -
           smoothTreble
@@ -1089,11 +1456,12 @@ startButton.onclick =
 
       /*
       ==================================================
-      COLOR
+      DYNAMIC COLOR
       ==================================================
       */
 
       const hueSpeed =
+
         0.10 +
         smoothBass /
         220;
@@ -1104,7 +1472,8 @@ startButton.onclick =
 
 
       if (
-        huePosition >= 360
+        huePosition >=
+        360
       ) {
 
         huePosition -=
@@ -1114,6 +1483,7 @@ startButton.onclick =
 
 
       const hue =
+
         (
           huePosition +
           smoothBass *
@@ -1123,6 +1493,7 @@ startButton.onclick =
 
 
       const saturation =
+
         Math.min(
 
           100,
@@ -1135,6 +1506,7 @@ startButton.onclick =
 
 
       const lightness =
+
         Math.min(
 
           72,
@@ -1147,6 +1519,7 @@ startButton.onclick =
 
 
       const dynamicColor =
+
         `hsl(
           ${hue},
           ${saturation}%,
@@ -1168,6 +1541,7 @@ startButton.onclick =
 
         0,
         0,
+
         canvas.width,
         canvas.height
 
@@ -1176,61 +1550,57 @@ startButton.onclick =
 
       /*
       ==================================================
-      CALMER OSCILLOSCOPE WAVEFORM
+      CALM WAVEFORM
       ==================================================
       */
 
       const centerY =
+
         canvas.height *
         0.30;
 
 
       /*
       Reduced bass expansion.
-
-      Previously the divisor was much smaller,
-      which caused bass hits to make the waveform
-      expand dramatically.
       */
 
       const amplitudeBoost =
+
         1 +
         smoothBass /
         350;
 
 
       /*
-      Reduced overall waveform height.
-
-      0.14 instead of ~0.22.
+      Smaller overall waveform.
       */
 
       const amplitude =
+
         canvas.height *
         0.14 *
         amplitudeBoost;
 
 
       const sliceWidth =
+
         canvas.width /
         waveform.length;
 
 
       /*
-      Reduced glow.
+      Softer glow.
       */
 
       const glow =
+
         8 +
         smoothMids /
         4;
 
 
-      /*
-      Reduced line thickness.
-      */
-
       ctx.lineWidth =
+
         2.0 +
         smoothBass /
         300;
@@ -1251,7 +1621,8 @@ startButton.onclick =
       ctx.beginPath();
 
 
-      let x = 0;
+      let x =
+        0;
 
 
       for (
@@ -1262,14 +1633,12 @@ startButton.onclick =
 
 
         /*
-        Slowly move the displayed waveform
-        toward the actual incoming waveform.
-
-        This makes it feel smoother and
-        much less frantic.
+        Smooth the waveform toward the
+        current audio sample.
         */
 
         smoothWaveform[i] +=
+
           (
             waveform[i] -
             smoothWaveform[i]
@@ -1278,6 +1647,7 @@ startButton.onclick =
 
 
         const normalized =
+
           (
             smoothWaveform[i] -
             128
@@ -1286,6 +1656,7 @@ startButton.onclick =
 
 
         const y =
+
           centerY +
           normalized *
           amplitude;
@@ -1320,8 +1691,7 @@ startButton.onclick =
 
 
       /*
-      Thin bright line layered over
-      the glowing waveform.
+      Thin highlight.
       */
 
       ctx.shadowBlur =
@@ -1333,6 +1703,7 @@ startButton.onclick =
 
 
       ctx.strokeStyle =
+
         `hsl(
           ${hue},
           100%,
@@ -1350,16 +1721,19 @@ startButton.onclick =
       */
 
       const centerX =
+
         canvas.width /
         2;
 
 
       const halfWidth =
+
         canvas.width /
         2;
 
 
       const barWidth =
+
         halfWidth /
         barCount;
 
@@ -1372,6 +1746,12 @@ startButton.onclick =
         14000;
 
 
+      /*
+      ==================================================
+      DRAW BARS
+      ==================================================
+      */
+
       for (
         let i = 0;
         i < barCount;
@@ -1379,12 +1759,18 @@ startButton.onclick =
       ) {
 
 
+        /*
+        Logarithmic frequency mapping.
+        */
+
         const fraction1 =
+
           i /
           barCount;
 
 
         const fraction2 =
+
           (
             i + 1
           ) /
@@ -1392,7 +1778,9 @@ startButton.onclick =
 
 
         const freq1 =
+
           minFreq *
+
           Math.pow(
 
             maxFreq /
@@ -1404,7 +1792,9 @@ startButton.onclick =
 
 
         const freq2 =
+
           minFreq *
+
           Math.pow(
 
             maxFreq /
@@ -1416,18 +1806,21 @@ startButton.onclick =
 
 
         let startBin =
+
           frequencyToBin(
             freq1
           );
 
 
         let endBin =
+
           frequencyToBin(
             freq2
           );
 
 
         startBin =
+
           Math.max(
             0,
             startBin
@@ -1435,6 +1828,7 @@ startButton.onclick =
 
 
         endBin =
+
           Math.min(
 
             spectrum.length -
@@ -1451,6 +1845,7 @@ startButton.onclick =
         ) {
 
           endBin =
+
             Math.min(
 
               spectrum.length -
@@ -1465,7 +1860,8 @@ startButton.onclick =
 
 
         /*
-        Peak frequency energy.
+        Find strongest frequency value
+        inside the band.
         */
 
         let value =
@@ -1479,6 +1875,7 @@ startButton.onclick =
         ) {
 
           value =
+
             Math.max(
 
               value,
@@ -1492,7 +1889,7 @@ startButton.onclick =
 
         /*
         ==================================================
-        CENTER-SENSITIVE NOISE GATE
+        CENTER NOISE GATE
         ==================================================
         */
 
@@ -1508,6 +1905,7 @@ startButton.onclick =
             ?
 
             0.07 *
+
             (
               1 -
               i /
@@ -1520,11 +1918,13 @@ startButton.onclick =
 
 
         const noiseGate =
+
           0.10 +
           centerGateBoost;
 
 
         let normalized =
+
           value /
           255;
 
@@ -1541,10 +1941,12 @@ startButton.onclick =
 
 
           normalized =
+
             (
               normalized -
               noiseGate
             ) /
+
             (
               1 -
               noiseGate
@@ -1552,10 +1954,11 @@ startButton.onclick =
 
 
           /*
-          Quiet signal boost.
+          Quiet-signal boost.
           */
 
           normalized =
+
             Math.pow(
 
               normalized,
@@ -1568,6 +1971,7 @@ startButton.onclick =
 
 
         normalized =
+
           Math.min(
 
             1,
@@ -1585,7 +1989,7 @@ startButton.onclick =
 
         /*
         ==================================================
-        BAR SMOOTHING
+        BAR MOVEMENT
         ==================================================
         */
 
@@ -1595,19 +1999,23 @@ startButton.onclick =
         ) {
 
           smoothBars[i] +=
+
             (
               normalized -
               smoothBars[i]
             ) *
+
             barRiseSpeed;
 
         } else {
 
           smoothBars[i] +=
+
             (
               normalized -
               smoothBars[i]
             ) *
+
             barFallSpeed;
 
         }
@@ -1625,10 +2033,18 @@ startButton.onclick =
 
 
         const displayedValue =
+
           smoothBars[i];
 
 
+        /*
+        ==================================================
+        HEIGHT
+        ==================================================
+        */
+
         const height =
+
           displayedValue *
           canvas.height *
           0.38;
@@ -1641,22 +2057,30 @@ startButton.onclick =
         */
 
         const barHue =
+
           (
             hue +
-            i * 3 +
+
+            i *
+            3 +
+
             value *
             0.12
+
           ) %
           360;
 
 
         const barLightness =
+
           35 +
+
           displayedValue *
           35;
 
 
         const barColor =
+
           `hsl(
             ${barHue},
             95%,
@@ -1673,37 +2097,47 @@ startButton.onclick =
 
 
         ctx.shadowBlur =
+
           4 +
+
           displayedValue *
           18;
 
 
         /*
         ==================================================
-        BAR POSITION
+        MIRRORED POSITION
         ==================================================
         */
 
         const offset =
+
           i *
           barWidth;
 
 
         const rightX =
+
           centerX +
           offset;
 
 
         const leftX =
+
           centerX -
           offset -
           barWidth;
 
 
         const y =
+
           canvas.height -
           height;
 
+
+        /*
+        Right side.
+        */
 
         ctx.fillRect(
 
@@ -1712,15 +2146,22 @@ startButton.onclick =
           y,
 
           Math.max(
+
             1,
+
             barWidth -
             2
+
           ),
 
           height
 
         );
 
+
+        /*
+        Left side.
+        */
 
         ctx.fillRect(
 
@@ -1729,9 +2170,12 @@ startButton.onclick =
           y,
 
           Math.max(
+
             1,
+
             barWidth -
             2
+
           ),
 
           height
