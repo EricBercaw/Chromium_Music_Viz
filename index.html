@@ -1,140 +1,455 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Music Visualizer</title>
-<style>
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  overflow: hidden;
-}
+  <meta charset="utf-8">
+  <title>Music Visualizer</title>
 
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      cursor: none;
+    }
 
-#start {
-  position: fixed;
-  inset: 0;
-  margin: auto;
-  width: 240px;
-  height: 64px;
-  font-size: 20px;
-  z-index: 2;
-}
-</style>
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #start {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      width: 240px;
+      height: 64px;
+      font-size: 20px;
+      z-index: 2;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
-<button id="start">Start Visualizer</button>
-<canvas id="canvas"></canvas>
+  <button id="start">Start Visualizer</button>
 
-<script>
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const startButton = document.getElementById("start");
+  <canvas id="canvas"></canvas>
 
-function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-window.addEventListener("resize", resize);
-resize();
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const startButton = document.getElementById("start");
 
-startButton.onclick = async () => {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      channelCount: 1,
-      sampleRate: 48000,
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-  });
 
-  const audioContext = new AudioContext({
-    sampleRate: 48000
-  });
+    window.addEventListener("resize", resize);
+    resize();
 
-  const source = audioContext.createMediaStreamSource(stream);
-  const analyser = audioContext.createAnalyser();
+    startButton.onclick = async () => {
+      try {
 
-  analyser.fftSize = 2048;
-  analyser.smoothingTimeConstant = 0.75;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            sampleRate: 48000,
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
 
-  source.connect(analyser);
+        const audioContext = new AudioContext({
+          sampleRate: 48000
+        });
 
-  const waveform = new Uint8Array(analyser.fftSize);
-  const spectrum = new Uint8Array(analyser.frequencyBinCount);
+        await audioContext.resume();
 
-  startButton.remove();
+      const source =
+        audioContext.createMediaStreamSource(stream);
 
-  function draw() {
-    requestAnimationFrame(draw);
+      const gainNode =
+        audioContext.createGain();
 
-    analyser.getByteTimeDomainData(waveform);
-    analyser.getByteFrequencyData(spectrum);
+      const analyser =
+        audioContext.createAnalyser();
 
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      analyser.fftSize = 2048;
 
-    // Waveform
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = "lime";
-    ctx.shadowBlur = 18;
-    ctx.shadowColor = "lime";
+      /*
+      Lower smoothing = reacts faster to small sounds.
+      */
+      analyser.smoothingTimeConstant = 0.60;
 
-    ctx.beginPath();
+      /*
+      Increase this for more sensitivity.
 
-    const centerY = canvas.height * 0.32;
-    const amplitude = canvas.height * 0.22;
-    const sliceWidth = canvas.width / waveform.length;
+      1.0 = normal
+      2.0 = 2x
+      3.0 = 3x
+      4.0 = very sensitive
+      */
+      gainNode.gain.value = 4.0;
 
-    let x = 0;
+      source.connect(gainNode);
+      gainNode.connect(analyser);
 
-    for (let i = 0; i < waveform.length; i++) {
-      const normalized = (waveform[i] - 128) / 128;
-      const y = centerY + normalized * amplitude;
+        const waveform =
+          new Uint8Array(analyser.fftSize);
 
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
+        const spectrum =
+          new Uint8Array(analyser.frequencyBinCount);
+
+        startButton.remove();
+
+        let smoothBass = 0;
+        let smoothMids = 0;
+        let smoothTreble = 0;
+        let huePosition = 0;
+
+        function draw() {
+
+          requestAnimationFrame(draw);
+
+          analyser.getByteTimeDomainData(waveform);
+
+          analyser.getByteFrequencyData(spectrum);
+
+          /*
+          ----------------------------------------
+          CALCULATE FREQUENCY ENERGY
+          ----------------------------------------
+          */
+
+          let bass = 0;
+          let mids = 0;
+          let treble = 0;
+
+          const bassEnd = 18;
+          const midEnd = 120;
+
+          for (let i = 0; i < bassEnd; i++) {
+            bass += spectrum[i];
+          }
+
+          bass /= bassEnd;
+
+          for (let i = bassEnd; i < midEnd; i++) {
+            mids += spectrum[i];
+          }
+
+          mids /= (midEnd - bassEnd);
+
+          for (let i = midEnd; i < spectrum.length; i++) {
+            treble += spectrum[i];
+          }
+
+          treble /= (spectrum.length - midEnd);
+
+          /*
+          Smooth the frequency values so that
+          colors do not flicker too aggressively.
+          */
+
+          smoothBass +=
+            (bass - smoothBass) * 0.12;
+
+          smoothMids +=
+            (mids - smoothMids) * 0.10;
+
+          smoothTreble +=
+            (treble - smoothTreble) * 0.10;
+
+          /*
+          ----------------------------------------
+          DYNAMIC COLOR
+          ----------------------------------------
+          */
+
+          /*
+          Slowly rotate hue continuously.
+
+          Bass increases how quickly the hue moves.
+          */
+
+          const hueSpeed =
+            0.15 + smoothBass / 200;
+
+          huePosition += hueSpeed;
+
+          if (huePosition >= 360) {
+            huePosition -= 360;
+          }
+
+          /*
+          Bass controls hue.
+
+          Mids control saturation.
+
+          Treble controls brightness.
+          */
+
+          const hue =
+            (huePosition + smoothBass * 0.8) % 360;
+
+          const saturation =
+            Math.min(
+              100,
+              70 + smoothMids * 0.12
+            );
+
+          const lightness =
+            Math.min(
+              70,
+              38 + smoothTreble * 0.12
+            );
+
+          const dynamicColor =
+            `hsl(
+              ${hue},
+              ${saturation}%,
+              ${lightness}%
+            )`;
+
+          /*
+          ----------------------------------------
+          CLEAR SCREEN
+          ----------------------------------------
+          */
+
+          ctx.fillStyle = "black";
+
+          ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+
+          /*
+          ----------------------------------------
+          OSCILLOSCOPE WAVEFORM
+          ----------------------------------------
+          */
+
+          const centerY =
+            canvas.height * 0.31;
+
+          /*
+          Bass slightly increases waveform size.
+          */
+
+          const amplitudeBoost =
+            1 + smoothBass / 180;
+
+          const amplitude =
+            canvas.height *
+            0.20 *
+            amplitudeBoost;
+
+          const sliceWidth =
+            canvas.width /
+            waveform.length;
+
+          /*
+          Glow intensity reacts mostly to mids.
+          */
+
+          const glow =
+            12 + smoothMids / 2.5;
+
+          ctx.lineWidth =
+            2.5 + smoothBass / 150;
+
+          ctx.strokeStyle =
+            dynamicColor;
+
+          ctx.shadowColor =
+            dynamicColor;
+
+          ctx.shadowBlur =
+            glow;
+
+          ctx.beginPath();
+
+          let x = 0;
+
+          for (
+            let i = 0;
+            i < waveform.length;
+            i++
+          ) {
+
+            const normalized =
+              (waveform[i] - 128) / 128;
+
+            const y =
+              centerY +
+              normalized *
+              amplitude;
+
+            if (i === 0) {
+
+              ctx.moveTo(x, y);
+
+            } else {
+
+              ctx.lineTo(x, y);
+
+            }
+
+            x += sliceWidth;
+          }
+
+          ctx.stroke();
+
+          /*
+          Draw another thinner line over
+          the glowing waveform to make
+          the center appear brighter.
+          */
+
+          ctx.shadowBlur = 0;
+
+          ctx.lineWidth = 1;
+
+          ctx.strokeStyle =
+            `hsl(
+              ${hue},
+              100%,
+              75%
+            )`;
+
+          ctx.stroke();
+
+          /*
+          ----------------------------------------
+          FREQUENCY SPECTRUM
+          ----------------------------------------
+          */
+
+          const barCount = 100;
+
+          const barWidth =
+            canvas.width / barCount;
+
+          /*
+          Spread FFT bins across the bars.
+          */
+
+          const binsPerBar =
+            Math.floor(
+              spectrum.length /
+              barCount
+            );
+
+          for (
+            let i = 0;
+            i < barCount;
+            i++
+          ) {
+
+            let total = 0;
+
+            const start =
+              i * binsPerBar;
+
+            const end =
+              start + binsPerBar;
+
+            for (
+              let j = start;
+              j < end;
+              j++
+            ) {
+
+              total += spectrum[j];
+            }
+
+            const value =
+              total / binsPerBar;
+
+            /*
+            Bar height responds to
+            frequency strength.
+            */
+
+            const height =
+              (value / 255) *
+              canvas.height *
+              0.32;
+
+            /*
+            Every bar receives a slightly
+            different hue.
+
+            The whole gradient shifts
+            according to the music.
+            */
+
+            const barHue =
+              (
+                hue +
+                i * 2.2 +
+                value * 0.2
+              ) % 360;
+
+            const barLightness =
+              Math.min(
+                70,
+                30 + value * 0.15
+              );
+
+            const barColor =
+              `hsl(
+                ${barHue},
+                90%,
+                ${barLightness}%
+              )`;
+
+            ctx.fillStyle =
+              barColor;
+
+            ctx.shadowColor =
+              barColor;
+
+            ctx.shadowBlur =
+              4 + value / 20;
+
+            ctx.fillRect(
+              i * barWidth,
+              canvas.height - height,
+              Math.max(
+                1,
+                barWidth - 2
+              ),
+              height
+            );
+          }
+
+          ctx.shadowBlur = 0;
+        }
+
+        draw();
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Could not access the audio input.\n\n" +
+          error.message
+        );
       }
-
-      x += sliceWidth;
-    }
-
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Frequency spectrum
-    const barCount = 100;
-    const barWidth = canvas.width / barCount;
-
-    for (let i = 0; i < barCount; i++) {
-      const value = spectrum[i];
-      const h = (value / 255) * canvas.height * 0.35;
-
-      ctx.fillStyle = `rgb(0, ${100 + value / 2}, 0)`;
-
-      ctx.fillRect(
-        i * barWidth,
-        canvas.height - h,
-        barWidth - 2,
-        h
-      );
-    }
-  }
-
-  draw();
-};
-</script>
+    };
+  </script>
 
 </body>
 </html>
