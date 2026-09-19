@@ -52,7 +52,6 @@ function resize() {
 }
 
 window.addEventListener("resize", resize);
-
 resize();
 
 
@@ -60,11 +59,18 @@ startButton.onclick = async () => {
 
   try {
 
+    /*
+    ==================================================
+    AUDIO INPUT
+    ==================================================
+    */
+
     const stream =
       await navigator.mediaDevices.getUserMedia({
         audio: {
           channelCount: 1,
           sampleRate: 48000,
+
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false
@@ -82,9 +88,9 @@ startButton.onclick = async () => {
 
 
     /*
-    ------------------------------------------
+    ==================================================
     AUDIO SOURCE
-    ------------------------------------------
+    ==================================================
     */
 
     const source =
@@ -92,60 +98,61 @@ startButton.onclick = async () => {
 
 
     /*
-    ------------------------------------------
-    AUDIO GAIN
-    ------------------------------------------
-
-    1 = normal
-    2 = moderately sensitive
-    4 = very sensitive
-    6+ = extremely sensitive
-
-    We don't need 12x anymore because
-    we're making the analyser itself
-    much more sensitive below.
+    ==================================================
+    GAIN
+    ==================================================
     */
 
     const gainNode =
       audioContext.createGain();
 
-    gainNode.gain.value = 6.0;
+    gainNode.gain.value = 4.0;
 
 
     /*
-    ------------------------------------------
+    ==================================================
+    HIGH-PASS FILTER
+    ==================================================
+
+    Slightly stronger cutoff than before.
+
+    This helps remove low-frequency rumble,
+    DC offset, and electrical noise that can
+    make the center bars stay elevated.
+    */
+
+    const highPass =
+      audioContext.createBiquadFilter();
+
+    highPass.type = "highpass";
+
+    highPass.frequency.value = 45;
+
+    highPass.Q.value = 0.7;
+
+
+    /*
+    ==================================================
     ANALYSER
-    ------------------------------------------
+    ==================================================
     */
 
     const analyser =
       audioContext.createAnalyser();
 
 
-    /*
-    Larger FFT gives us better low-frequency
-    resolution.
-
-    4096 works nicely for music.
-    */
-
     analyser.fftSize = 4096;
 
 
     /*
-    Lower smoothing reacts faster.
+    Lower smoothing gives fast response.
     */
 
     analyser.smoothingTimeConstant = 0.55;
 
 
     /*
-    VERY IMPORTANT FOR SENSITIVITY.
-
-    Default is approximately -100 to -30.
-
-    Lower minDecibels means quiet sounds
-    become visible.
+    Makes quiet audio visible.
     */
 
     analyser.minDecibels = -105;
@@ -153,10 +160,30 @@ startButton.onclick = async () => {
     analyser.maxDecibels = -15;
 
 
+    /*
+    Audio pipeline:
+
+    USB input
+       ↓
+    Gain
+       ↓
+    High-pass filter
+       ↓
+    Analyser
+    */
+
     source.connect(gainNode);
 
-    gainNode.connect(analyser);
+    gainNode.connect(highPass);
 
+    highPass.connect(analyser);
+
+
+    /*
+    ==================================================
+    DATA ARRAYS
+    ==================================================
+    */
 
     const waveform =
       new Uint8Array(
@@ -173,17 +200,51 @@ startButton.onclick = async () => {
     startButton.remove();
 
 
+    /*
+    ==================================================
+    SMOOTH GLOBAL AUDIO VALUES
+    ==================================================
+    */
+
     let smoothBass = 0;
+
     let smoothMids = 0;
+
     let smoothTreble = 0;
 
     let huePosition = 0;
 
 
     /*
-    ------------------------------------------
-    LOG FREQUENCY HELPER
-    ------------------------------------------
+    ==================================================
+    SPECTRUM BAR SETTINGS
+    ==================================================
+    */
+
+    const barCount = 64;
+
+
+    /*
+    Stored height for each bar.
+    */
+
+    const smoothBars =
+      new Array(barCount).fill(0);
+
+
+    /*
+    Fast bar response.
+    */
+
+    const barRiseSpeed = 0.70;
+
+    const barFallSpeed = 0.18;
+
+
+    /*
+    ==================================================
+    FREQUENCY → FFT BIN
+    ==================================================
     */
 
     function frequencyToBin(freq) {
@@ -191,18 +252,20 @@ startButton.onclick = async () => {
       const nyquist =
         audioContext.sampleRate / 2;
 
+
       return Math.round(
         freq /
         nyquist *
         spectrum.length
       );
+
     }
 
 
     /*
-    ------------------------------------------
-    MAIN DRAW LOOP
-    ------------------------------------------
+    ==================================================
+    DRAW LOOP
+    ==================================================
     */
 
     function draw() {
@@ -221,43 +284,37 @@ startButton.onclick = async () => {
 
 
       /*
-      ==========================================
-      FREQUENCY ENERGY
-      ==========================================
+      ==================================================
+      BASS / MID / TREBLE ENERGY
+      ==================================================
       */
-
-
-      /*
-      More meaningful frequency ranges.
-
-      Bass:
-      20-250 Hz
-
-      Mid:
-      250-4000 Hz
-
-      Treble:
-      4000-12000 Hz
-      */
-
 
       const bassStart =
-        frequencyToBin(20);
+        frequencyToBin(45);
+
 
       const bassEnd =
         frequencyToBin(250);
 
+
       const midEnd =
         frequencyToBin(4000);
+
 
       const trebleEnd =
         frequencyToBin(12000);
 
 
       let bass = 0;
+
       let mids = 0;
+
       let treble = 0;
 
+
+      /*
+      Bass
+      */
 
       for (
         let i = bassStart;
@@ -277,6 +334,10 @@ startButton.onclick = async () => {
         );
 
 
+      /*
+      Mids
+      */
+
       for (
         let i = bassEnd;
         i < midEnd;
@@ -294,6 +355,10 @@ startButton.onclick = async () => {
           midEnd - bassEnd
         );
 
+
+      /*
+      Treble
+      */
 
       for (
         let i = midEnd;
@@ -314,36 +379,33 @@ startButton.onclick = async () => {
 
 
       /*
-      ------------------------------------------
-      SMOOTH VALUES
-      ------------------------------------------
+      Smooth overall frequency values.
       */
 
       smoothBass +=
         (bass - smoothBass) *
-        0.18;
+        0.12;
 
 
       smoothMids +=
         (mids - smoothMids) *
-        0.15;
+        0.10;
 
 
       smoothTreble +=
         (treble - smoothTreble) *
-        0.15;
+        0.10;
 
 
       /*
-      ==========================================
-      COLORS
-      ==========================================
+      ==================================================
+      DYNAMIC COLOR
+      ==================================================
       */
 
-
       const hueSpeed =
-        0.12 +
-        smoothBass / 180;
+        0.10 +
+        smoothBass / 220;
 
 
       huePosition += hueSpeed;
@@ -359,15 +421,15 @@ startButton.onclick = async () => {
       const hue =
         (
           huePosition +
-          smoothBass * 0.9
+          smoothBass * 0.8
         ) % 360;
 
 
       const saturation =
         Math.min(
           100,
-          72 +
-          smoothMids * 0.13
+          70 +
+          smoothMids * 0.12
         );
 
 
@@ -388,14 +450,12 @@ startButton.onclick = async () => {
 
 
       /*
-      ==========================================
+      ==================================================
       CLEAR SCREEN
-      ==========================================
+      ==================================================
       */
 
-
-      ctx.fillStyle =
-        "black";
+      ctx.fillStyle = "black";
 
 
       ctx.fillRect(
@@ -407,25 +467,20 @@ startButton.onclick = async () => {
 
 
       /*
-      ==========================================
-      OSCILLOSCOPE
-      ==========================================
+      ==================================================
+      OSCILLOSCOPE WAVEFORM
+      ==================================================
       */
-
 
       const centerY =
         canvas.height *
         0.30;
 
 
-      /*
-      More sensitive waveform.
-      */
-
       const amplitudeBoost =
         1 +
         smoothBass /
-        140;
+        150;
 
 
       const amplitude =
@@ -440,15 +495,15 @@ startButton.onclick = async () => {
 
 
       const glow =
-        15 +
+        12 +
         smoothMids /
-        2;
+        2.5;
 
 
       ctx.lineWidth =
         2.5 +
         smoothBass /
-        120;
+        140;
 
 
       ctx.strokeStyle =
@@ -515,7 +570,7 @@ startButton.onclick = async () => {
 
 
       /*
-      Bright center line
+      Bright center line.
       */
 
       ctx.shadowBlur = 0;
@@ -535,26 +590,11 @@ startButton.onclick = async () => {
 
 
       /*
-      ==========================================
-      CENTERED LOG SPECTRUM
-      ==========================================
+      ==================================================
+      CENTERED LOGARITHMIC SPECTRUM
+      ==================================================
 
-      Bass is in the middle.
-
-      Treble spreads toward the edges.
-
-             TREBLE ← BASS → TREBLE
-
-      ==========================================
-      */
-
-
-      const barCount = 64;
-
-
-      /*
-      Only one half needs 64 bars because
-      we mirror them.
+      TREBLE ← MID ← BASS | BASS → MID → TREBLE
       */
 
       const centerX =
@@ -571,16 +611,20 @@ startButton.onclick = async () => {
 
 
       /*
-      Frequency range displayed.
-
-      Don't waste space on frequencies
-      above ~14 kHz.
+      Start slightly higher than before
+      to avoid low-frequency rumble.
       */
 
-      const minFreq = 30;
+      const minFreq = 45;
 
       const maxFreq = 14000;
 
+
+      /*
+      ==================================================
+      DRAW EACH FREQUENCY BAR
+      ==================================================
+      */
 
       for (
         let i = 0;
@@ -590,16 +634,10 @@ startButton.onclick = async () => {
 
 
         /*
-        ----------------------------------------
+        --------------------------------------------------
         LOGARITHMIC FREQUENCY MAPPING
-        ----------------------------------------
-
-        This is the critical change.
-
-        Low frequencies get much more
-        horizontal space.
+        --------------------------------------------------
         */
-
 
         const fraction1 =
           i /
@@ -657,31 +695,24 @@ startButton.onclick = async () => {
           );
 
 
-        /*
-        Ensure each bar gets at least
-        one FFT bin.
-        */
-
         if (
-          endBin <=
-          startBin
+          endBin <= startBin
         ) {
 
           endBin =
-            startBin + 1;
+            Math.min(
+              spectrum.length - 1,
+              startBin + 1
+            );
 
         }
 
 
         /*
-        ----------------------------------------
-        FIND PEAK ENERGY
-        ----------------------------------------
-
-        Peak works better than average
-        for a sensitive music visualizer.
+        --------------------------------------------------
+        FIND STRONGEST VALUE IN THIS BAND
+        --------------------------------------------------
         */
-
 
         let value = 0;
 
@@ -702,43 +733,86 @@ startButton.onclick = async () => {
 
 
         /*
-        ----------------------------------------
-        EXTRA VISUAL SENSITIVITY
-        ----------------------------------------
+        ==================================================
+        DYNAMIC NOISE GATE
+        ==================================================
 
-        Boost quiet frequencies without
-        completely destroying loud ones.
+        The center bars get a stronger gate.
+
+        i = 0 is the center.
+
+        By bar 12, the extra center gate
+        has faded away completely.
+
+        Center:
+          about 0.17
+
+        Outer bars:
+          0.10
         */
+
+        const centerGateBars = 12;
+
+
+        const centerGateBoost =
+          i < centerGateBars
+            ? 0.055 *
+              (
+                1 -
+                i /
+                centerGateBars
+              )
+            : 0;
+
+
+        const noiseGate =
+          0.10 +
+          centerGateBoost;
 
 
         let normalized =
           value / 255;
 
 
-        /*
-        exponent below 1 exaggerates
-        quieter values.
-
-        0.55 = very sensitive
-        */
-
-        normalized =
-          Math.pow(
-            normalized,
-            0.55
-          );
-
-
-        /*
-        Minimum tiny response so quiet
-        audio is still visible.
-        */
-
         if (
-          normalized > 0.02
+          normalized <
+          noiseGate
         ) {
 
-          normalized += 0.05;
+          normalized = 0;
+
+        } else {
+
+
+          /*
+          Remove the noise gate portion
+          and remap the remaining signal.
+          */
+
+          normalized =
+            (
+              normalized -
+              noiseGate
+            ) /
+            (
+              1 -
+              noiseGate
+            );
+
+
+          /*
+          ==================================================
+          QUIET-SIGNAL BOOST
+          ==================================================
+
+          Makes real quiet music respond strongly.
+          */
+
+          normalized =
+            Math.pow(
+              normalized,
+              0.50
+            );
 
         }
 
@@ -746,34 +820,98 @@ startButton.onclick = async () => {
         normalized =
           Math.min(
             1,
-            normalized
+            Math.max(
+              0,
+              normalized
+            )
           );
 
 
+        /*
+        ==================================================
+        BAR SMOOTHING
+        ==================================================
+        */
+
+        if (
+          normalized >
+          smoothBars[i]
+        ) {
+
+          /*
+          Rising
+          */
+
+          smoothBars[i] +=
+            (
+              normalized -
+              smoothBars[i]
+            ) *
+            barRiseSpeed;
+
+        } else {
+
+          /*
+          Falling
+          */
+
+          smoothBars[i] +=
+            (
+              normalized -
+              smoothBars[i]
+            ) *
+            barFallSpeed;
+
+        }
+
+
+        /*
+        Snap tiny values to zero.
+        */
+
+        if (
+          smoothBars[i] <
+          0.003
+        ) {
+
+          smoothBars[i] = 0;
+
+        }
+
+
+        const displayedValue =
+          smoothBars[i];
+
+
+        /*
+        ==================================================
+        BAR HEIGHT
+        ==================================================
+        */
+
         const height =
-          normalized *
+          displayedValue *
           canvas.height *
           0.38;
 
 
         /*
-        ----------------------------------------
-        COLOR
-        ----------------------------------------
+        ==================================================
+        BAR COLOR
+        ==================================================
         */
-
 
         const barHue =
           (
             hue +
             i * 3 +
-            value * 0.15
+            value * 0.12
           ) % 360;
 
 
         const barLightness =
           35 +
-          normalized *
+          displayedValue *
           35;
 
 
@@ -794,39 +932,26 @@ startButton.onclick = async () => {
 
 
         ctx.shadowBlur =
-          5 +
-          normalized *
-          20;
+          4 +
+          displayedValue *
+          18;
 
 
         /*
-        ----------------------------------------
-        BAR POSITIONS
-        ----------------------------------------
-
-        i=0 is closest to center.
-
-        Higher frequencies travel outward.
+        ==================================================
+        CENTERED BAR POSITIONS
+        ==================================================
         */
-
 
         const offset =
           i *
           barWidth;
 
 
-        /*
-        Right side
-        */
-
         const rightX =
           centerX +
           offset;
 
-
-        /*
-        Left side mirror
-        */
 
         const leftX =
           centerX -
