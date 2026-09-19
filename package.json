@@ -1,0 +1,24 @@
+{
+  "name": "music-visualizer",
+  "version": "1.0.0",
+  "description": "USB audio music visualizer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "com.eric.musicvisualizer",
+    "productName": "Music Visualizer",
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "AudioVideo"
+    }
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^27.0.0"
+  }
+}

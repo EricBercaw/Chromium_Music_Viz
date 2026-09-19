@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Music Visualizer</title>
+<style>
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#start {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: 240px;
+  height: 64px;
+  font-size: 20px;
+  z-index: 2;
+}
+</style>
+</head>
+<body>
+
+<button id="start">Start Visualizer</button>
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const startButton = document.getElementById("start");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+startButton.onclick = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      channelCount: 1,
+      sampleRate: 48000,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false
+    }
+  });
+
+  const audioContext = new AudioContext({
+    sampleRate: 48000
+  });
+
+  const source = audioContext.createMediaStreamSource(stream);
+  const analyser = audioContext.createAnalyser();
+
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.75;
+
+  source.connect(analyser);
+
+  const waveform = new Uint8Array(analyser.fftSize);
+  const spectrum = new Uint8Array(analyser.frequencyBinCount);
+
+  startButton.remove();
+
+  function draw() {
+    requestAnimationFrame(draw);
+
+    analyser.getByteTimeDomainData(waveform);
+    analyser.getByteFrequencyData(spectrum);
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Waveform
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "lime";
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = "lime";
+
+    ctx.beginPath();
+
+    const centerY = canvas.height * 0.32;
+    const amplitude = canvas.height * 0.22;
+    const sliceWidth = canvas.width / waveform.length;
+
+    let x = 0;
+
+    for (let i = 0; i < waveform.length; i++) {
+      const normalized = (waveform[i] - 128) / 128;
+      const y = centerY + normalized * amplitude;
+
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+
+      x += sliceWidth;
+    }
+
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Frequency spectrum
+    const barCount = 100;
+    const barWidth = canvas.width / barCount;
+
+    for (let i = 0; i < barCount; i++) {
+      const value = spectrum[i];
+      const h = (value / 255) * canvas.height * 0.35;
+
+      ctx.fillStyle = `rgb(0, ${100 + value / 2}, 0)`;
+
+      ctx.fillRect(
+        i * barWidth,
+        canvas.height - h,
+        barWidth - 2,
+        h
+      );
+    }
+  }
+
+  draw();
+};
+</script>
+
+</body>
+</html>
