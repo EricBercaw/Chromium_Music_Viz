@@ -1,8 +1,9 @@
 {
   "name": "music-visualizer",
   "version": "1.0.0",
-  "description": "Chromium-based music visualizer with Spotify metadata and Apple TV casting",
+  "description": "Chromium-based USB audio music visualizer with Spotify now-playing display",
   "main": "main.js",
+  "desktopName": "com.ericbercaw.musicvisualizer",
   "author": "Eric Bercaw",
   "license": "MIT",
   "scripts": {
@@ -22,7 +23,8 @@
       "target": [
         "AppImage"
       ],
-      "category": "AudioVideo"
+      "category": "AudioVideo",
+      "executableName": "music-visualizer"
     },
     "artifactName": "Music Visualizer-${version}.${ext}"
   },

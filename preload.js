@@ -21,34 +21,3 @@ contextBridge.exposeInMainWorld(
 
   }
 );
-
-
-/*
-==================================================
-APPLE TV CASTING
-==================================================
-*/
-
-contextBridge.exposeInMainWorld(
-  "casting",
-  {
-
-    start: () =>
-      ipcRenderer.invoke(
-        "cast-start"
-      ),
-
-
-    stop: () =>
-      ipcRenderer.invoke(
-        "cast-stop"
-      ),
-
-
-    status: () =>
-      ipcRenderer.invoke(
-        "cast-status"
-      )
-
-  }
-);
