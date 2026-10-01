@@ -9,7 +9,7 @@
   http-equiv="Content-Security-Policy"
   content="
     default-src 'self' data:;
-    img-src 'self' data: https: http:;
+    img-src 'self' data: https: http: file:;
     style-src 'self' 'unsafe-inline';
     script-src 'self' 'unsafe-inline';
     connect-src 'self';
@@ -27,8 +27,18 @@ body {
   height: 100%;
   background: black;
   overflow: hidden;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+
+body.running {
   cursor: none;
 }
+
 
 canvas {
   width: 100%;
@@ -39,23 +49,263 @@ canvas {
 
 /*
 ==================================================
-START BUTTON
+VISUALIZER SELECTOR
 ==================================================
 */
 
-#start {
+#visualizer-picker {
   position: fixed;
   inset: 0;
-  margin: auto;
 
-  width: 260px;
-  height: 70px;
+  z-index: 100;
 
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-  z-index: 50;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(25, 25, 32, 0.95),
+      rgba(0, 0, 0, 1) 70%
+    );
+
+  color: white;
+}
+
+
+#picker-content {
+  width: min(
+    920px,
+    calc(100% - 60px)
+  );
+
+  text-align: center;
+}
+
+
+#picker-title {
+  margin: 0 0 10px 0;
+
+  font-size: 42px;
+
+  font-weight: 700;
+}
+
+
+#picker-subtitle {
+  margin: 0 0 36px 0;
+
+  font-size: 17px;
+
+  opacity: 0.65;
+}
+
+
+#visualizer-options {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 24px;
+}
+
+
+.visualizer-choice {
+  min-height: 280px;
+
+  padding: 28px;
+
+  color: white;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.055
+    );
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.17
+    );
+
+  border-radius: 20px;
 
   cursor: pointer;
+
+  text-align: left;
+
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease;
+}
+
+
+.visualizer-choice:hover {
+  transform:
+    translateY(-4px);
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.095
+    );
+
+  border-color:
+    rgba(
+      255,
+      255,
+      255,
+      0.35
+    );
+}
+
+
+.visualizer-choice:disabled {
+  cursor: wait;
+
+  opacity: 0.45;
+}
+
+
+.choice-preview {
+  height: 120px;
+
+  margin-bottom: 24px;
+
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  overflow: hidden;
+}
+
+
+.preview-spectrum span {
+  width: 11px;
+
+  border-radius:
+    3px 3px 0 0;
+
+  background:
+    linear-gradient(
+      to top,
+      #5d4cff,
+      #e74cff
+    );
+}
+
+
+.preview-spectrum span:nth-child(1),
+.preview-spectrum span:nth-child(12) {
+  height: 25%;
+}
+
+.preview-spectrum span:nth-child(2),
+.preview-spectrum span:nth-child(11) {
+  height: 38%;
+}
+
+.preview-spectrum span:nth-child(3),
+.preview-spectrum span:nth-child(10) {
+  height: 52%;
+}
+
+.preview-spectrum span:nth-child(4),
+.preview-spectrum span:nth-child(9) {
+  height: 68%;
+}
+
+.preview-spectrum span:nth-child(5),
+.preview-spectrum span:nth-child(8) {
+  height: 85%;
+}
+
+.preview-spectrum span:nth-child(6),
+.preview-spectrum span:nth-child(7) {
+  height: 100%;
+}
+
+
+.preview-pixels {
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+.preview-pixels span {
+  width: 13px;
+  height: 13px;
+
+  border-radius: 2px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.10
+    );
+}
+
+
+.preview-pixels span:nth-child(4),
+.preview-pixels span:nth-child(5),
+.preview-pixels span:nth-child(6),
+.preview-pixels span:nth-child(7),
+.preview-pixels span:nth-child(8),
+.preview-pixels span:nth-child(9) {
+  background:
+    linear-gradient(
+      135deg,
+      #4edcff,
+      #bd48ff
+    );
+
+  box-shadow:
+    0 0 10px
+    rgba(
+      140,
+      90,
+      255,
+      0.75
+    );
+}
+
+
+.choice-name {
+  font-size: 24px;
+
+  font-weight: 700;
+
+  margin-bottom: 8px;
+}
+
+
+.choice-description {
+  font-size: 14px;
+
+  line-height: 1.5;
+
+  opacity: 0.62;
 }
 
 
@@ -74,11 +324,6 @@ AUDIO STATUS
   z-index: 40;
 
   color: white;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
 
   font-size: 12px;
 
@@ -111,11 +356,6 @@ SPOTIFY PANEL
   box-sizing: border-box;
 
   color: white;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
 
   background:
     rgba(
@@ -270,6 +510,22 @@ SPOTIFY PANEL
   opacity: 0.55;
 }
 
+
+@media (
+  max-width: 760px
+) {
+
+  #visualizer-options {
+    grid-template-columns:
+      1fr;
+  }
+
+  #picker-title {
+    font-size: 32px;
+  }
+
+}
+
 </style>
 
 </head>
@@ -278,12 +534,142 @@ SPOTIFY PANEL
 <body>
 
 
+<!--
+==================================================
+VISUALIZER PICKER
+==================================================
+-->
+
+<div id="visualizer-picker">
+
+  <div id="picker-content">
+
+    <h1 id="picker-title">
+      Select Visualizer
+    </h1>
+
+    <p id="picker-subtitle">
+      Choose a visualization to start the live system-audio capture.
+    </p>
+
+
+    <div id="visualizer-options">
+
+
+      <!--
+      VISUALIZER 1
+      -->
+
+      <button
+        class="visualizer-choice"
+        data-mode="spectrum"
+        type="button"
+      >
+
+        <div
+          class="
+            choice-preview
+            preview-spectrum
+          "
+        >
+
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+
+        </div>
+
+
+        <div class="choice-name">
+          Visualizer 1 Demo
+        </div>
+
+        <div class="choice-description">
+          Mirrored frequency spectrum with reactive
+          bass, dynamic colors, and smooth vertical bars.
+        </div>
+
+      </button>
+
+
+      <!--
+      VISUALIZER 2
+      -->
+
+      <button
+        class="visualizer-choice"
+        data-mode="pixels"
+        type="button"
+      >
+
+        <div
+          class="
+            choice-preview
+            preview-pixels
+          "
+        >
+
+          <span></span>
+          <span></span>
+          <span></span>
+
+          <span></span>
+          <span></span>
+          <span></span>
+
+          <span></span>
+          <span></span>
+          <span></span>
+
+          <span></span>
+          <span></span>
+          <span></span>
+
+        </div>
+
+
+        <div class="choice-name">
+          Visualizer 2 Pixel Bar
+        </div>
+
+        <div class="choice-description">
+          A centered segmented meter that lights outward
+          in colorful squares with the music.
+        </div>
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!--
+==================================================
+SPOTIFY
+==================================================
+-->
+
 <div id="spotify-panel">
 
   <img
     id="spotify-art"
     alt="Album artwork"
   >
+
 
   <div id="spotify-info">
 
@@ -303,6 +689,7 @@ SPOTIFY PANEL
       Album
     </div>
 
+
     <div id="spotify-progress">
 
       <div
@@ -310,6 +697,7 @@ SPOTIFY PANEL
       </div>
 
     </div>
+
 
     <div id="spotify-time">
 
@@ -328,13 +716,8 @@ SPOTIFY PANEL
 </div>
 
 
-<button id="start">
-  Start Live Visualizer
-</button>
-
-
 <div id="audio-status">
-  Waiting to start
+  Choose a visualizer
 </div>
 
 
@@ -346,7 +729,7 @@ SPOTIFY PANEL
 
 /*
 ==================================================
-CANVAS
+ELEMENTS
 ==================================================
 */
 
@@ -360,14 +743,27 @@ const ctx =
   canvas.getContext(
     "2d",
     {
-      alpha: false
+      alpha:
+        false
     }
   );
 
 
-const startButton =
+const visualizerPicker =
   document.getElementById(
-    "start"
+    "visualizer-picker"
+  );
+
+
+const pickerSubtitle =
+  document.getElementById(
+    "picker-subtitle"
+  );
+
+
+const choiceButtons =
+  document.querySelectorAll(
+    ".visualizer-choice"
   );
 
 
@@ -377,10 +773,17 @@ const audioStatus =
   );
 
 
+/*
+==================================================
+CANVAS SIZE
+==================================================
+*/
+
 function resize() {
 
   canvas.width =
     window.innerWidth;
+
 
   canvas.height =
     window.innerHeight;
@@ -474,8 +877,11 @@ let spotifySyncTime =
 function formatTime(ms) {
 
   if (
-    !Number.isFinite(ms) ||
-    ms < 0
+    !Number.isFinite(
+      ms
+    ) ||
+    ms <
+      0
   ) {
 
     return "0:00";
@@ -518,7 +924,7 @@ function formatTime(ms) {
 
 /*
 ==================================================
-UPDATE SPOTIFY
+SPOTIFY UPDATE
 ==================================================
 */
 
@@ -623,10 +1029,6 @@ async function updateSpotify() {
 }
 
 
-/*
-Metadata does not need very frequent polling.
-*/
-
 setInterval(
   updateSpotify,
   2000
@@ -638,7 +1040,7 @@ updateSpotify();
 
 /*
 ==================================================
-SPOTIFY PROGRESS
+SPOTIFY TIMER
 ==================================================
 */
 
@@ -656,8 +1058,7 @@ function updateSpotifyProgress(
 
 
   /*
-  Only update Spotify DOM roughly
-  10 times per second.
+  Only update the DOM 10x per second.
   */
 
   if (
@@ -781,6 +1182,10 @@ let visualizerStarted =
   false;
 
 
+let activeVisualizer =
+  null;
+
+
 /*
 ==================================================
 PCM CONVERSION
@@ -824,13 +1229,13 @@ function pcm16ToFloat32(
 
 /*
 ==================================================
-START VISUALIZER
+START AUDIO + VISUALIZER
 ==================================================
 */
 
-startButton.onclick =
-  async () => {
-
+async function startVisualizer(
+  mode
+) {
 
   if (
     visualizerStarted
@@ -841,11 +1246,40 @@ startButton.onclick =
   }
 
 
+  activeVisualizer =
+    mode;
+
+
+  /*
+  Disable selector while audio starts.
+  */
+
+  choiceButtons.forEach(
+    button => {
+
+      button.disabled =
+        true;
+
+    }
+  );
+
+
+  pickerSubtitle.textContent =
+    "Starting live PipeWire audio...";
+
+
   try {
 
 
-    audioStatus.textContent =
-      "Starting live PipeWire capture...";
+    if (
+      !window.systemAudio
+    ) {
+
+      throw new Error(
+        "systemAudio interface is not available."
+      );
+
+    }
 
 
     /*
@@ -871,13 +1305,13 @@ startButton.onclick =
 
     /*
     ==================================================
-    PCM STREAM QUEUE
+    PCM QUEUE
     ==================================================
 
-    This deliberately does NOT use AudioWorklet.
+    We deliberately use ScriptProcessor here rather
+    than loading a separate AudioWorklet module.
 
-    That avoids the packaged AppImage problem
-    loading pcm-worklet.js.
+    This keeps the packaged AppImage working.
     */
 
     const pcmQueue =
@@ -896,13 +1330,6 @@ startButton.onclick =
       0;
 
 
-    /*
-    Roughly 500ms maximum queue.
-
-    If rendering falls behind, old audio gets
-    discarded so the visualizer remains live.
-    */
-
     const maxQueuedSamples =
       48000 *
       2 *
@@ -911,7 +1338,7 @@ startButton.onclick =
 
     /*
     ==================================================
-    SCRIPT PROCESSOR
+    PCM PROCESSOR
     ==================================================
     */
 
@@ -931,6 +1358,7 @@ startButton.onclick =
         currentPCMOffset >=
           currentPCM.length
       ) {
+
 
         if (
           pcmQueue.length ===
@@ -979,9 +1407,7 @@ startButton.onclick =
 
 
     pcmNode.onaudioprocess =
-      (
-        event
-      ) => {
+      event => {
 
 
         const left =
@@ -1028,12 +1454,10 @@ startButton.onclick =
         .createAnalyser();
 
 
-    /*
-    Lower FFT size reduces computation.
-    */
-
     analyser.fftSize =
-      2048;
+      mode === "pixels"
+        ? 1024
+        : 2048;
 
 
     analyser.smoothingTimeConstant =
@@ -1050,7 +1474,7 @@ startButton.onclick =
 
     /*
     ==================================================
-    SILENT AUDIO GRAPH
+    SILENT GRAPH
     ==================================================
     */
 
@@ -1080,16 +1504,14 @@ startButton.onclick =
 
     /*
     ==================================================
-    RECEIVE LIVE PCM
+    RECEIVE PIPEWIRE PCM
     ==================================================
     */
 
     removeAudioListener =
       window.systemAudio
         .onData(
-          (
-            data
-          ) => {
+          data => {
 
 
             const samples =
@@ -1108,7 +1530,8 @@ startButton.onclick =
 
 
             /*
-            Remove stale buffered audio if needed.
+            Drop old data rather than letting
+            visualizer latency build up.
             */
 
             while (
@@ -1133,15 +1556,13 @@ startButton.onclick =
 
     /*
     ==================================================
-    AUDIO ERROR
+    AUDIO ERRORS
     ==================================================
     */
 
     window.systemAudio
       .onError(
-        (
-          message
-        ) => {
+        message => {
 
           console.error(
             "Live audio error:",
@@ -1174,32 +1595,37 @@ startButton.onclick =
     ) {
 
       throw new Error(
-        "Could not start system audio capture."
+        "Could not start live system audio."
       );
 
     }
-
-
-    console.log(
-      "LIVE AUDIO:",
-      result
-    );
-
-
-    audioStatus.textContent =
-      "LIVE • PipeWire system audio";
-
-
-    startButton.remove();
 
 
     visualizerStarted =
       true;
 
 
+    document.body.classList.add(
+      "running"
+    );
+
+
+    visualizerPicker.style.display =
+      "none";
+
+
+    audioStatus.textContent =
+      mode ===
+        "spectrum"
+
+        ? "LIVE • Visualizer 1"
+
+        : "LIVE • Visualizer 2";
+
+
     /*
     ==================================================
-    FREQUENCY DATA
+    VISUALIZER DATA
     ==================================================
     */
 
@@ -1209,82 +1635,18 @@ startButton.onclick =
       );
 
 
-    /*
-    ==================================================
-    GLOBAL ENERGY
-    ==================================================
-    */
-
-    let smoothBass =
-      0;
-
-
-    let huePosition =
-      0;
-
-
-    /*
-    ==================================================
-    BAR SETTINGS
-    ==================================================
-    */
-
-    const barCount =
-      48;
-
-
-    const smoothBars =
-      new Float32Array(
-        barCount
-      );
-
-
-    /*
-    Current slower motion settings.
-    */
-
-    const barRiseSpeed =
-      0.60;
-
-
-    const barFallSpeed =
-      0.12;
-
-
-    /*
-    Maximum bar height = 60% screen.
-    */
-
-    const heightMultiplier =
-      0.60;
-
-
-    /*
-    ==================================================
-    FREQUENCY SETTINGS
-    ==================================================
-    */
-
-    const minFreq =
-      45;
-
-
-    const maxFreq =
-      14000;
-
-
     const nyquist =
       audioContext.sampleRate /
       2;
 
 
     function frequencyToBin(
-      freq
+      frequency
     ) {
 
       return Math.round(
 
-        freq /
+        frequency /
         nyquist *
         spectrum.length
 
@@ -1295,7 +1657,7 @@ startButton.onclick =
 
     /*
     ==================================================
-    PRECOMPUTE BASS BINS
+    SHARED FREQUENCY RANGES
     ==================================================
     */
 
@@ -1311,11 +1673,53 @@ startButton.onclick =
       );
 
 
+    const meterStart =
+      frequencyToBin(
+        45
+      );
+
+
+    const meterEnd =
+      frequencyToBin(
+        6000
+      );
+
+
     /*
     ==================================================
-    PRECOMPUTE BAR RANGES
+    VISUALIZER 1 SETTINGS
     ==================================================
     */
+
+    const barCount =
+      48;
+
+
+    const smoothBars =
+      new Float32Array(
+        barCount
+      );
+
+
+    const barRiseSpeed =
+      0.60;
+
+
+    const barFallSpeed =
+      0.12;
+
+
+    const heightMultiplier =
+      0.60;
+
+
+    const minFreq =
+      45;
+
+
+    const maxFreq =
+      14000;
+
 
     const barRanges =
       new Array(
@@ -1332,6 +1736,10 @@ startButton.onclick =
     const centerSensitivityBars =
       18;
 
+
+    /*
+    Calculate spectrum ranges once.
+    */
 
     for (
       let i = 0;
@@ -1426,11 +1834,6 @@ startButton.onclick =
 
       /*
       Slight center boost.
-
-      Starts at 1.35x and smoothly falls
-      to approximately 1.0x.
-
-      It never drops below 1.0.
       */
 
       if (
@@ -1439,7 +1842,7 @@ startButton.onclick =
       ) {
 
         centerBoosts[i] =
-          1.1 -
+          1.35 -
           (
             i /
             centerSensitivityBars
@@ -1458,9 +1861,44 @@ startButton.onclick =
 
     /*
     ==================================================
-    RENDER SETTINGS
+    VISUALIZER 2 SETTINGS
     ==================================================
     */
+
+    /*
+    Number of squares on EACH side
+    of the center.
+    */
+
+    const pixelSegments =
+      24;
+
+
+    let smoothPixelLevel =
+      0;
+
+
+    const pixelRiseSpeed =
+      0.55;
+
+
+    const pixelFallSpeed =
+      0.35;
+
+
+    /*
+    ==================================================
+    SHARED ANIMATION STATE
+    ==================================================
+    */
+
+    let smoothBass =
+      0;
+
+
+    let huePosition =
+      0;
+
 
     let lastFrameTime =
       0;
@@ -1477,148 +1915,14 @@ startButton.onclick =
 
     /*
     ==================================================
-    DRAW
+    DRAW VISUALIZER 1
     ==================================================
     */
 
-    function draw(
-      currentTime
+    function drawSpectrumVisualizer(
+      hue
     ) {
 
-
-      requestAnimationFrame(
-        draw
-      );
-
-
-      const elapsed =
-        currentTime -
-        lastFrameTime;
-
-
-      if (
-        elapsed <
-        frameInterval
-      ) {
-
-        return;
-
-      }
-
-
-      lastFrameTime =
-        currentTime -
-        (
-          elapsed %
-          frameInterval
-        );
-
-
-      analyser
-        .getByteFrequencyData(
-          spectrum
-        );
-
-
-      /*
-      ==================================================
-      BASS ENERGY
-      ==================================================
-      */
-
-      let bass =
-        0;
-
-
-      for (
-        let i =
-          bassStart;
-        i <
-          bassEnd;
-        i++
-      ) {
-
-        bass +=
-          spectrum[i];
-
-      }
-
-
-      bass /=
-        Math.max(
-          1,
-          bassEnd -
-            bassStart
-        );
-
-
-      smoothBass +=
-        (
-          bass -
-          smoothBass
-        ) *
-        0.12;
-
-
-      /*
-      ==================================================
-      COLOR
-      ==================================================
-      */
-
-      const hueSpeed =
-        0.10 +
-        smoothBass /
-        220;
-
-
-      huePosition +=
-        hueSpeed;
-
-
-      if (
-        huePosition >=
-        360
-      ) {
-
-        huePosition -=
-          360;
-
-      }
-
-
-      const hue =
-        (
-          huePosition +
-          smoothBass *
-          0.8
-        ) %
-        360;
-
-
-      /*
-      ==================================================
-      CLEAR SCREEN
-      ==================================================
-      */
-
-      ctx.fillStyle =
-        "#000";
-
-
-      ctx.fillRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      /*
-      ==================================================
-      GEOMETRY
-      ==================================================
-      */
 
       const centerX =
         canvas.width *
@@ -1642,12 +1946,6 @@ startButton.onclick =
             2
         );
 
-
-      /*
-      ==================================================
-      DRAW BARS
-      ==================================================
-      */
 
       for (
         let i = 0;
@@ -1673,17 +1971,13 @@ startButton.onclick =
           j++
         ) {
 
-          const sample =
-            spectrum[j];
-
-
           if (
-            sample >
+            spectrum[j] >
             value
           ) {
 
             value =
-              sample;
+              spectrum[j];
 
           }
 
@@ -1691,9 +1985,7 @@ startButton.onclick =
 
 
         /*
-        ==================================================
-        SENSITIVITY
-        ==================================================
+        Sensitivity.
         */
 
         const noiseGate =
@@ -1750,9 +2042,7 @@ startButton.onclick =
 
 
         /*
-        ==================================================
-        SMOOTHING
-        ==================================================
+        Bar smoothing.
         */
 
         if (
@@ -1794,23 +2084,11 @@ startButton.onclick =
           smoothBars[i];
 
 
-        /*
-        ==================================================
-        HEIGHT
-        ==================================================
-        */
-
         const height =
           displayedValue *
           canvas.height *
           heightMultiplier;
 
-
-        /*
-        ==================================================
-        BAR COLOR
-        ==================================================
-        */
 
         const barHue =
           (
@@ -1823,26 +2101,22 @@ startButton.onclick =
           360;
 
 
-        const barLightness =
+        const lightness =
           35 +
           displayedValue *
           35;
 
 
-        const barColor =
-          `hsl(${barHue}, 95%, ${barLightness}%)`;
+        const color =
+          `hsl(${barHue}, 95%, ${lightness}%)`;
 
 
         ctx.fillStyle =
-          barColor;
+          color;
 
-
-        /*
-        Reduced glow for performance.
-        */
 
         ctx.shadowColor =
-          barColor;
+          color;
 
 
         ctx.shadowBlur =
@@ -1850,12 +2124,6 @@ startButton.onclick =
           displayedValue *
           6;
 
-
-        /*
-        ==================================================
-        MIRRORED BARS
-        ==================================================
-        */
 
         const offset =
           i *
@@ -1902,6 +2170,593 @@ startButton.onclick =
     }
 
 
+    /*
+    ==================================================
+    DRAW VISUALIZER 2
+    ==================================================
+
+    Pixel meter sits approximately 40%
+    down the screen.
+
+    Squares illuminate outward from the center.
+    ==================================================
+    */
+
+    function drawPixelVisualizer(
+      hue
+    ) {
+
+
+      /*
+      Get overall music energy.
+      */
+
+      let sum =
+        0;
+
+
+      let peak =
+        0;
+
+
+      let count =
+        0;
+
+
+      for (
+        let i =
+          meterStart;
+        i <
+          meterEnd;
+        i++
+      ) {
+
+        const value =
+          spectrum[i];
+
+
+        sum +=
+          value;
+
+
+        if (
+          value >
+          peak
+        ) {
+
+          peak =
+            value;
+
+        }
+
+
+        count++;
+
+      }
+
+
+      const average =
+        count >
+          0
+
+          ?
+
+          sum /
+          count
+
+          :
+
+          0;
+
+
+      /*
+      Blend average energy and strongest peak.
+      */
+
+      let rawLevel =
+        (
+          average *
+          0.70 +
+          peak *
+          0.30
+        ) /
+        255;
+
+
+      /*
+      Remove low-level noise.
+      */
+
+      rawLevel =
+        Math.max(
+          0,
+          (
+            rawLevel -
+            0.03
+          ) /
+          0.55
+        );
+
+
+      rawLevel =
+        Math.min(
+          1,
+          Math.pow(
+            rawLevel,
+            0.58
+          )
+        );
+
+
+      /*
+      Smooth growth and decay.
+      */
+
+      if (
+        rawLevel >
+        smoothPixelLevel
+      ) {
+
+        smoothPixelLevel +=
+          (
+            rawLevel -
+            smoothPixelLevel
+          ) *
+          pixelRiseSpeed;
+
+      } else {
+
+        smoothPixelLevel +=
+          (
+            rawLevel -
+            smoothPixelLevel
+          ) *
+          pixelFallSpeed;
+
+      }
+
+
+      /*
+      ==================================================
+      PIXEL GEOMETRY
+      ==================================================
+      */
+
+      const centerX =
+        canvas.width *
+        0.5;
+
+
+      /*
+      Position bar at 40% of screen height.
+      */
+
+      const centerY =
+        canvas.height *
+        0.40;
+
+
+      /*
+      Bar can occupy about 82% of screen width.
+      */
+
+      const maxHalfWidth =
+        canvas.width *
+        0.41;
+
+
+      const step =
+        maxHalfWidth /
+        pixelSegments;
+
+
+      const squareSize =
+        Math.max(
+          12,
+          Math.min(
+            24,
+            step -
+              5
+          )
+        );
+
+
+      /*
+      Number of illuminated squares
+      on each side.
+      */
+
+      const illuminated =
+        Math.round(
+          smoothPixelLevel *
+          pixelSegments
+        );
+
+
+      /*
+      Draw dim inactive squares first.
+      */
+
+      ctx.shadowBlur =
+        0;
+
+
+      for (
+        let i = 0;
+        i <
+          pixelSegments;
+        i++
+      ) {
+
+
+        const distance =
+          (
+            i +
+            0.5
+          ) *
+          step;
+
+
+        const leftX =
+          centerX -
+          distance -
+          squareSize /
+          2;
+
+
+        const rightX =
+          centerX +
+          distance -
+          squareSize /
+          2;
+
+
+        const y =
+          centerY -
+          squareSize /
+          2;
+
+
+        ctx.fillStyle =
+          "rgba(255, 255, 255, 0.055)";
+
+
+        ctx.fillRect(
+          leftX,
+          y,
+          squareSize,
+          squareSize
+        );
+
+
+        ctx.fillRect(
+          rightX,
+          y,
+          squareSize,
+          squareSize
+        );
+
+      }
+
+
+      /*
+      Draw illuminated squares.
+      */
+
+      for (
+        let i = 0;
+        i <
+          illuminated;
+        i++
+      ) {
+
+
+        const distance =
+          (
+            i +
+            0.5
+          ) *
+          step;
+
+
+        const leftX =
+          centerX -
+          distance -
+          squareSize /
+          2;
+
+
+        const rightX =
+          centerX +
+          distance -
+          squareSize /
+          2;
+
+
+        const y =
+          centerY -
+          squareSize /
+          2;
+
+
+        /*
+        Colors move from the center outward.
+        */
+
+        const segmentHue =
+          (
+            hue +
+            i *
+            3.7
+          ) %
+          360;
+
+
+        const progress =
+          illuminated >
+            0
+
+            ?
+
+            i /
+            illuminated
+
+            :
+
+            0;
+
+
+        const lightness =
+          62 -
+          progress *
+          12;
+
+
+        const color =
+          `hsl(${segmentHue}, 95%, ${lightness}%)`;
+
+
+        ctx.fillStyle =
+          color;
+
+
+        ctx.shadowColor =
+          color;
+
+
+        /*
+        Keep glow modest for casting performance.
+        */
+
+        ctx.shadowBlur =
+          2;
+
+
+        ctx.fillRect(
+          leftX,
+          y,
+          squareSize,
+          squareSize
+        );
+
+
+        ctx.fillRect(
+          rightX,
+          y,
+          squareSize,
+          squareSize
+        );
+
+      }
+
+
+      /*
+      Bright center marker.
+      */
+
+      const centerHue =
+        (
+          hue +
+          15
+        ) %
+        360;
+
+
+      const centerColor =
+        `hsl(${centerHue}, 100%, 68%)`;
+
+
+      ctx.fillStyle =
+        centerColor;
+
+
+      ctx.shadowColor =
+        centerColor;
+
+
+      ctx.shadowBlur =
+        6;
+
+
+      ctx.fillRect(
+        centerX -
+          squareSize /
+          2,
+        centerY -
+          squareSize /
+          2,
+        squareSize,
+        squareSize
+      );
+
+
+      ctx.shadowBlur =
+        0;
+
+    }
+
+
+    /*
+    ==================================================
+    MASTER DRAW LOOP
+    ==================================================
+    */
+
+    function draw(
+      currentTime
+    ) {
+
+
+      requestAnimationFrame(
+        draw
+      );
+
+
+      const elapsed =
+        currentTime -
+        lastFrameTime;
+
+
+      if (
+        elapsed <
+        frameInterval
+      ) {
+
+        return;
+
+      }
+
+
+      lastFrameTime =
+        currentTime -
+        (
+          elapsed %
+          frameInterval
+        );
+
+
+      analyser
+        .getByteFrequencyData(
+          spectrum
+        );
+
+
+      /*
+      Shared bass energy used for color movement.
+      */
+
+      let bass =
+        0;
+
+
+      for (
+        let i =
+          bassStart;
+        i <
+          bassEnd;
+        i++
+      ) {
+
+        bass +=
+          spectrum[i];
+
+      }
+
+
+      bass /=
+        Math.max(
+          1,
+          bassEnd -
+            bassStart
+        );
+
+
+      smoothBass +=
+        (
+          bass -
+          smoothBass
+        ) *
+        0.12;
+
+
+      /*
+      Dynamic color movement.
+      */
+
+      const hueSpeed =
+        0.12 +
+        smoothBass /
+        260;
+
+
+      huePosition +=
+        hueSpeed;
+
+
+      if (
+        huePosition >=
+        360
+      ) {
+
+        huePosition -=
+          360;
+
+      }
+
+
+      const hue =
+        (
+          huePosition +
+          smoothBass *
+          0.75
+        ) %
+        360;
+
+
+      /*
+      Clear canvas.
+      */
+
+      ctx.shadowBlur =
+        0;
+
+
+      ctx.fillStyle =
+        "#000";
+
+
+      ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+
+      /*
+      Draw selected visualization.
+      */
+
+      if (
+        activeVisualizer ===
+        "pixels"
+      ) {
+
+        drawPixelVisualizer(
+          hue
+        );
+
+      } else {
+
+        drawSpectrumVisualizer(
+          hue
+        );
+
+      }
+
+    }
+
+
     requestAnimationFrame(
       draw
     );
@@ -1919,19 +2774,60 @@ startButton.onclick =
       "Could not start live audio";
 
 
-    alert(
-      "Could not start live system audio.\n\n" +
-      error.message
+    pickerSubtitle.textContent =
+      "Could not start visualizer: " +
+      error.message;
+
+
+    choiceButtons.forEach(
+      button => {
+
+        button.disabled =
+          false;
+
+      }
     );
+
+
+    visualizerStarted =
+      false;
 
   }
 
-};
+}
 
 
 /*
 ==================================================
-STOP ON EXIT
+VISUALIZER SELECTION
+==================================================
+*/
+
+choiceButtons.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const mode =
+          button.dataset.mode;
+
+
+        startVisualizer(
+          mode
+        );
+
+      }
+    );
+
+  }
+);
+
+
+/*
+==================================================
+STOP AUDIO ON EXIT
 ==================================================
 */
 
