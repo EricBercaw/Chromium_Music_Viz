@@ -6,7 +6,20 @@
 
 <meta charset="utf-8">
 
-<title>Music Visualizer</title>
+<meta
+  http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self' data:;
+    img-src 'self' data: https: http:;
+    style-src 'self' 'unsafe-inline';
+    script-src 'self' 'unsafe-inline';
+    connect-src 'self';
+  "
+>
+
+<title>
+  Music Visualizer
+</title>
 
 
 <style>
@@ -17,7 +30,6 @@ body {
   margin: 0;
 
   width: 100%;
-
   height: 100%;
 
   background: black;
@@ -32,7 +44,6 @@ body {
 canvas {
 
   width: 100%;
-
   height: 100%;
 
   display: block;
@@ -54,15 +65,43 @@ START BUTTON
 
   margin: auto;
 
-  width: 240px;
-
-  height: 64px;
+  width: 260px;
+  height: 70px;
 
   font-size: 20px;
 
   z-index: 50;
 
   cursor: pointer;
+
+}
+
+
+/*
+==================================================
+STATUS MESSAGE
+==================================================
+*/
+
+#audio-status {
+
+  position: fixed;
+
+  left: 20px;
+  bottom: 18px;
+
+  z-index: 40;
+
+  color: white;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  font-size: 12px;
+
+  opacity: 0.60;
 
 }
 
@@ -78,7 +117,6 @@ SPOTIFY NOW PLAYING
   position: fixed;
 
   top: 22px;
-
   right: 22px;
 
   width: 390px;
@@ -117,7 +155,8 @@ SPOTIFY NOW PLAYING
       0.22
     );
 
-  border-radius: 14px;
+  border-radius:
+    14px;
 
   backdrop-filter:
     blur(14px);
@@ -130,7 +169,6 @@ SPOTIFY NOW PLAYING
 #spotify-art {
 
   width: 100px;
-
   height: 100px;
 
   flex-shrink: 0;
@@ -265,7 +303,8 @@ SPOTIFY NOW PLAYING
 
   display: flex;
 
-  justify-content: space-between;
+  justify-content:
+    space-between;
 
   font-size: 11px;
 
@@ -281,9 +320,11 @@ SPOTIFY NOW PLAYING
 <body>
 
 
-<!-- =============================================
+<!--
+==================================================
 SPOTIFY PANEL
-============================================= -->
+==================================================
+-->
 
 <div id="spotify-panel">
 
@@ -342,13 +383,20 @@ SPOTIFY PANEL
 </div>
 
 
-<!-- =============================================
+<!--
+==================================================
 START BUTTON
-============================================= -->
+==================================================
+-->
 
 <button id="start">
-  Start Visualizer
+  Start Live Visualizer
 </button>
+
+
+<div id="audio-status">
+  Waiting to start
+</div>
 
 
 <canvas id="canvas"></canvas>
@@ -381,10 +429,17 @@ const startButton =
   );
 
 
+const audioStatus =
+  document.getElementById(
+    "audio-status"
+  );
+
+
 function resize() {
 
   canvas.width =
     window.innerWidth;
+
 
   canvas.height =
     window.innerHeight;
@@ -500,17 +555,19 @@ function formatTime(ms) {
 
 
   const remaining =
-    seconds % 60;
+    seconds %
+    60;
 
 
   return (
     minutes +
     ":" +
-    String(remaining)
-      .padStart(
-        2,
-        "0"
-      )
+    String(
+      remaining
+    ).padStart(
+      2,
+      "0"
+    )
   );
 
 }
@@ -587,7 +644,9 @@ async function updateSpotify() {
 
     spotifyStatus.textContent =
       data.isPlaying
+
         ? "NOW PLAYING"
+
         : "PAUSED";
 
 
@@ -679,7 +738,8 @@ function updateSpotifyProgress() {
 
   const percentage =
 
-    spotifyState.durationMs > 0
+    spotifyState.durationMs >
+      0
 
       ?
 
@@ -718,6 +778,76 @@ updateSpotifyProgress();
 
 /*
 ==================================================
+AUDIO STATE
+==================================================
+*/
+
+let audioContext =
+  null;
+
+
+let pcmNode =
+  null;
+
+
+let analyser =
+  null;
+
+
+let silentGain =
+  null;
+
+
+let removeAudioListener =
+  null;
+
+
+let visualizerStarted =
+  false;
+
+
+/*
+==================================================
+INT16 PCM -> FLOAT32
+==================================================
+*/
+
+function pcm16ToFloat32(
+  arrayBuffer
+) {
+
+  const input =
+    new Int16Array(
+      arrayBuffer
+    );
+
+
+  const output =
+    new Float32Array(
+      input.length
+    );
+
+
+  for (
+    let i = 0;
+    i < input.length;
+    i++
+  ) {
+
+    output[i] =
+      input[i] /
+      32768;
+
+  }
+
+
+  return output;
+
+}
+
+
+/*
+==================================================
 START VISUALIZER
 ==================================================
 */
@@ -726,43 +856,35 @@ startButton.onclick =
   async () => {
 
 
+  if (
+    visualizerStarted
+  ) {
+
+    return;
+
+  }
+
+
   try {
+
+    audioStatus.textContent =
+      "Starting live PipeWire capture...";
 
 
     /*
     ==================================================
-    AUDIO INPUT
+    AUDIO CONTEXT
     ==================================================
     */
 
-    const stream =
-      await navigator.mediaDevices
-        .getUserMedia({
-
-          audio: {
-
-            channelCount: 1,
-
-            sampleRate: 48000,
-
-            echoCancellation:
-              false,
-
-            noiseSuppression:
-              false,
-
-            autoGainControl:
-              false
-
-          }
-
-        });
-
-
-    const audioContext =
+    audioContext =
       new AudioContext({
 
-        sampleRate: 48000
+        sampleRate:
+          48000,
+
+        latencyHint:
+          "interactive"
 
       });
 
@@ -772,44 +894,44 @@ startButton.onclick =
 
     /*
     ==================================================
-    AUDIO PIPELINE
+    PCM WORKLET
     ==================================================
     */
 
-    const source =
-      audioContext
-        .createMediaStreamSource(
-          stream
-        );
+    await audioContext.audioWorklet
+      .addModule(
+        "./pcm-worklet.js"
+      );
 
 
-    const gainNode =
-      audioContext
-        .createGain();
+    pcmNode =
+      new AudioWorkletNode(
+        audioContext,
+        "pcm-stream-processor",
+        {
+
+          numberOfInputs:
+            0,
+
+          numberOfOutputs:
+            1,
+
+          outputChannelCount:
+            [
+              2
+            ]
+
+        }
+      );
 
 
-    gainNode.gain.value =
-      4.0;
+    /*
+    ==================================================
+    ANALYSER
+    ==================================================
+    */
 
-
-    const highPass =
-      audioContext
-        .createBiquadFilter();
-
-
-    highPass.type =
-      "highpass";
-
-
-    highPass.frequency.value =
-      45;
-
-
-    highPass.Q.value =
-      0.7;
-
-
-    const analyser =
+    analyser =
       audioContext
         .createAnalyser();
 
@@ -822,27 +944,165 @@ startButton.onclick =
       0.55;
 
 
+    /*
+    Digital audio does not need the extremely
+    aggressive analog/USB noise settings.
+    */
+
     analyser.minDecibels =
-      -105;
+      -95;
 
 
     analyser.maxDecibels =
-      -15;
+      -10;
 
 
-    source.connect(
-      gainNode
-    );
+    /*
+    ==================================================
+    SILENT OUTPUT
+    ==================================================
+
+    An AudioWorklet needs to remain connected
+    to a live AudioContext graph.
+
+    We connect:
+
+    PCM Worklet
+        ↓
+    Analyser
+        ↓
+    zero-volume Gain
+        ↓
+    destination
+
+    Therefore:
+
+    - the analyser receives the music
+    - the browser keeps processing samples
+    - NO second copy of the music is audible
+    */
+
+    silentGain =
+      audioContext
+        .createGain();
 
 
-    gainNode.connect(
-      highPass
-    );
+    silentGain.gain.value =
+      0;
 
 
-    highPass.connect(
+    pcmNode.connect(
       analyser
     );
+
+
+    analyser.connect(
+      silentGain
+    );
+
+
+    silentGain.connect(
+      audioContext.destination
+    );
+
+
+    /*
+    ==================================================
+    RECEIVE LIVE PCM
+    ==================================================
+    */
+
+    removeAudioListener =
+      window.systemAudio
+        .onData(
+          (
+            data
+          ) => {
+
+            const samples =
+              pcm16ToFloat32(
+                data
+              );
+
+
+            pcmNode.port
+              .postMessage(
+                {
+                  samples
+                },
+                [
+                  samples.buffer
+                ]
+              );
+
+          }
+        );
+
+
+    /*
+    ==================================================
+    ERROR HANDLER
+    ==================================================
+    */
+
+    window.systemAudio
+      .onError(
+        (
+          message
+        ) => {
+
+          console.error(
+            "Live audio error:",
+            message
+          );
+
+
+          audioStatus.textContent =
+            "Audio error: " +
+            message;
+
+        }
+      );
+
+
+    /*
+    ==================================================
+    START PAREC
+    ==================================================
+    */
+
+    const result =
+      await window.systemAudio
+        .start();
+
+
+    if (
+      !result ||
+      !result.success
+    ) {
+
+      throw new Error(
+        "Could not start system audio capture."
+      );
+
+    }
+
+
+    console.log(
+      "LIVE AUDIO:",
+      result
+    );
+
+
+    audioStatus.textContent =
+      "LIVE • PipeWire system audio";
+
+
+    startButton.remove();
+
+
+    visualizerStarted =
+      true;
 
 
     /*
@@ -872,9 +1132,6 @@ startButton.onclick =
       new Uint8Array(
         analyser.frequencyBinCount
       );
-
-
-    startButton.remove();
 
 
     /*
@@ -912,7 +1169,9 @@ startButton.onclick =
     const smoothBars =
       new Array(
         barCount
-      ).fill(0);
+      ).fill(
+        0
+      );
 
 
     const barRiseSpeed =
@@ -1028,8 +1287,12 @@ startButton.onclick =
 
 
       for (
-        let i = bassStart;
-        i < bassEnd;
+        let i =
+          bassStart;
+
+        i <
+          bassEnd;
+
         i++
       ) {
 
@@ -1043,13 +1306,17 @@ startButton.onclick =
         Math.max(
           1,
           bassEnd -
-          bassStart
+            bassStart
         );
 
 
       for (
-        let i = bassEnd;
-        i < midEnd;
+        let i =
+          bassEnd;
+
+        i <
+          midEnd;
+
         i++
       ) {
 
@@ -1063,13 +1330,17 @@ startButton.onclick =
         Math.max(
           1,
           midEnd -
-          bassEnd
+            bassEnd
         );
 
 
       for (
-        let i = midEnd;
-        i < trebleEnd;
+        let i =
+          midEnd;
+
+        i <
+          trebleEnd;
+
         i++
       ) {
 
@@ -1083,7 +1354,7 @@ startButton.onclick =
         Math.max(
           1,
           trebleEnd -
-          midEnd
+            midEnd
         );
 
 
@@ -1128,7 +1399,8 @@ startButton.onclick =
 
 
       if (
-        huePosition >= 360
+        huePosition >=
+        360
       ) {
 
         huePosition -=
@@ -1197,16 +1469,27 @@ startButton.onclick =
         0.30;
 
 
-      const amplitudeBoost =
-        1 +
-        smoothBass /
-        350;
+      /*
+==================================================
+WAVEFORM SENSITIVITY
+==================================================
+    */
+
+    const waveformSensitivity =
+      2.25;
 
 
-      const amplitude =
-        canvas.height *
-        0.14 *
-        amplitudeBoost;
+    const amplitudeBoost =
+      1 +
+      smoothBass /
+      220;
+
+
+    const amplitude =
+      canvas.height *
+      0.14 *
+      waveformSensitivity *
+      amplitudeBoost;
 
 
       const sliceWidth =
@@ -1247,7 +1530,8 @@ startButton.onclick =
 
       for (
         let i = 0;
-        i < waveform.length;
+        i <
+          waveform.length;
         i++
       ) {
 
@@ -1358,7 +1642,8 @@ startButton.onclick =
 
       for (
         let i = 0;
-        i < barCount;
+        i <
+          barCount;
         i++
       ) {
 
@@ -1414,7 +1699,8 @@ startButton.onclick =
 
         endBin =
           Math.min(
-            spectrum.length - 1,
+            spectrum.length -
+              1,
             endBin
           );
 
@@ -1426,8 +1712,10 @@ startButton.onclick =
 
           endBin =
             Math.min(
-              spectrum.length - 1,
-              startBin + 1
+              spectrum.length -
+                1,
+              startBin +
+                1
             );
 
         }
@@ -1438,8 +1726,12 @@ startButton.onclick =
 
 
         for (
-          let j = startBin;
-          j <= endBin;
+          let j =
+            startBin;
+
+          j <=
+            endBin;
+
           j++
         ) {
 
@@ -1454,35 +1746,15 @@ startButton.onclick =
 
         /*
         ==================================================
-        CENTER NOISE GATE
+        DIGITAL NOISE GATE
         ==================================================
+
+        Much lighter than the previous
+        microphone/USB noise gate.
         */
 
-        const centerGateBars =
-          12;
-
-
-        const centerGateBoost =
-          i <
-          centerGateBars
-
-            ?
-
-            0.07 *
-            (
-              1 -
-              i /
-              centerGateBars
-            )
-
-            :
-
-            0;
-
-
         const noiseGate =
-          0.10 +
-          centerGateBoost;
+          0.025;
 
 
         let normalized =
@@ -1500,7 +1772,6 @@ startButton.onclick =
 
         } else {
 
-
           normalized =
             (
               normalized -
@@ -1515,7 +1786,7 @@ startButton.onclick =
           normalized =
             Math.pow(
               normalized,
-              0.50
+              0.58
             );
 
         }
@@ -1661,7 +1932,8 @@ startButton.onclick =
           y,
           Math.max(
             1,
-            barWidth - 2
+            barWidth -
+              2
           ),
           height
         );
@@ -1672,7 +1944,8 @@ startButton.onclick =
           y,
           Math.max(
             1,
-            barWidth - 2
+            barWidth -
+              2
           ),
           height
         );
@@ -1691,20 +1964,56 @@ startButton.onclick =
 
   } catch (error) {
 
-
     console.error(
       error
     );
 
 
+    audioStatus.textContent =
+      "Could not start live audio";
+
+
     alert(
-      "Could not access the audio input.\n\n" +
+      "Could not start live system audio.\n\n" +
       error.message
     );
 
   }
 
 };
+
+
+/*
+==================================================
+STOP ON PAGE EXIT
+==================================================
+*/
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    if (
+      removeAudioListener
+    ) {
+
+      removeAudioListener();
+
+    }
+
+
+    if (
+      window.systemAudio
+    ) {
+
+      window.systemAudio
+        .stop();
+
+    }
+
+  }
+);
+
 
 </script>
 
