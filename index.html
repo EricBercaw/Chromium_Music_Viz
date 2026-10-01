@@ -1,9 +1,6 @@
 <!doctype html>
-
 <html>
-
 <head>
-
 <meta charset="utf-8">
 
 <meta
@@ -17,39 +14,25 @@
   "
 >
 
-<title>
-  Music Visualizer
-</title>
-
+<title>Music Visualizer</title>
 
 <style>
 
 html,
 body {
-
   margin: 0;
-
   width: 100%;
   height: 100%;
-
   background: black;
-
   overflow: hidden;
-
   cursor: none;
-
 }
-
 
 canvas {
-
   width: 100%;
   height: 100%;
-
   display: block;
-
 }
-
 
 /*
 ==================================================
@@ -58,53 +41,32 @@ START BUTTON
 */
 
 #start {
-
   position: fixed;
-
   inset: 0;
-
   margin: auto;
-
   width: 260px;
   height: 70px;
-
   font-size: 20px;
-
   z-index: 50;
-
   cursor: pointer;
-
 }
-
 
 /*
 ==================================================
-STATUS MESSAGE
+AUDIO STATUS
 ==================================================
 */
 
 #audio-status {
-
   position: fixed;
-
   left: 20px;
   bottom: 18px;
-
   z-index: 40;
-
   color: white;
-
-  font-family:
-    Arial,
-    Helvetica,
-    sans-serif;
-
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 12px;
-
   opacity: 0.60;
-
 }
-
 
 /*
 ==================================================
@@ -113,21 +75,16 @@ SPOTIFY NOW PLAYING
 */
 
 #spotify-panel {
-
   position: fixed;
+  top: 33px;
+  right: 33px;
 
-  top: 22px;
-  right: 22px;
-
-  width: 390px;
-
-  padding: 14px;
+  width: 585px;
+  padding: 21px;
 
   display: none;
-
   align-items: center;
-
-  gap: 15px;
+  gap: 23px;
 
   box-sizing: border-box;
 
@@ -155,27 +112,27 @@ SPOTIFY NOW PLAYING
       0.22
     );
 
-  border-radius:
-    14px;
+  border-radius: 21px;
 
-  backdrop-filter:
-    blur(14px);
+  /*
+  Blur can cost GPU time while casting.
+
+  Reduced from 14px to 8px.
+  */
+  backdrop-filter: blur(8px);
 
   z-index: 30;
-
 }
 
-
 #spotify-art {
-
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
 
   flex-shrink: 0;
 
   object-fit: cover;
 
-  border-radius: 9px;
+  border-radius: 14px;
 
   background:
     rgba(
@@ -184,94 +141,61 @@ SPOTIFY NOW PLAYING
       255,
       0.08
     );
-
 }
-
 
 #spotify-info {
-
   flex: 1;
-
   min-width: 0;
-
 }
-
 
 #spotify-status {
-
-  font-size: 10px;
-
+  font-size: 15px;
   text-transform: uppercase;
-
-  letter-spacing: 1.5px;
-
+  letter-spacing: 2.25px;
   opacity: 0.55;
-
-  margin-bottom: 5px;
-
+  margin-bottom: 8px;
 }
 
-
 #spotify-title {
-
-  font-size: 19px;
-
+  font-size: 29px;
   font-weight: 700;
 
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
 
-  margin-bottom: 5px;
-
+  margin-bottom: 8px;
 }
 
-
 #spotify-artist {
-
-  font-size: 15px;
-
+  font-size: 23px;
   opacity: 0.85;
 
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
 
-  margin-bottom: 4px;
-
+  margin-bottom: 6px;
 }
 
-
 #spotify-album {
-
-  font-size: 12px;
-
+  font-size: 18px;
   opacity: 0.55;
 
   white-space: nowrap;
-
   overflow: hidden;
-
   text-overflow: ellipsis;
 
-  margin-bottom: 12px;
-
+  margin-bottom: 18px;
 }
 
-
 #spotify-progress {
-
   width: 100%;
-
-  height: 5px;
+  height: 8px;
 
   overflow: hidden;
 
-  border-radius: 20px;
+  border-radius: 30px;
 
   background:
     rgba(
@@ -280,51 +204,34 @@ SPOTIFY NOW PLAYING
       255,
       0.16
     );
-
 }
-
 
 #spotify-progress-fill {
-
   width: 0%;
-
   height: 100%;
 
-  border-radius: 20px;
+  border-radius: 30px;
 
   background: white;
-
 }
 
-
 #spotify-time {
-
-  margin-top: 5px;
+  margin-top: 8px;
 
   display: flex;
 
   justify-content:
     space-between;
 
-  font-size: 11px;
+  font-size: 16px;
 
   opacity: 0.55;
-
 }
 
 </style>
-
 </head>
 
-
 <body>
-
-
-<!--
-==================================================
-SPOTIFY PANEL
-==================================================
--->
 
 <div id="spotify-panel">
 
@@ -333,44 +240,33 @@ SPOTIFY PANEL
     alt="Album artwork"
   >
 
-
   <div id="spotify-info">
 
     <div id="spotify-status">
       NOW PLAYING
     </div>
 
-
     <div id="spotify-title">
       Song
     </div>
-
 
     <div id="spotify-artist">
       Artist
     </div>
 
-
     <div id="spotify-album">
       Album
     </div>
 
-
     <div id="spotify-progress">
-
-      <div
-        id="spotify-progress-fill">
-      </div>
-
+      <div id="spotify-progress-fill"></div>
     </div>
-
 
     <div id="spotify-time">
 
       <span id="spotify-position">
         0:00
       </span>
-
 
       <span id="spotify-duration">
         0:00
@@ -382,28 +278,17 @@ SPOTIFY PANEL
 
 </div>
 
-
-<!--
-==================================================
-START BUTTON
-==================================================
--->
-
 <button id="start">
   Start Live Visualizer
 </button>
-
 
 <div id="audio-status">
   Waiting to start
 </div>
 
-
 <canvas id="canvas"></canvas>
 
-
 <script>
-
 
 /*
 ==================================================
@@ -416,45 +301,40 @@ const canvas =
     "canvas"
   );
 
-
 const ctx =
   canvas.getContext(
-    "2d"
+    "2d",
+    {
+      alpha: false
+    }
   );
-
 
 const startButton =
   document.getElementById(
     "start"
   );
 
-
 const audioStatus =
   document.getElementById(
     "audio-status"
   );
-
 
 function resize() {
 
   canvas.width =
     window.innerWidth;
 
-
   canvas.height =
     window.innerHeight;
 
 }
-
 
 window.addEventListener(
   "resize",
   resize
 );
 
-
 resize();
-
 
 /*
 ==================================================
@@ -467,54 +347,45 @@ const spotifyPanel =
     "spotify-panel"
   );
 
-
 const spotifyArt =
   document.getElementById(
     "spotify-art"
   );
-
 
 const spotifyStatus =
   document.getElementById(
     "spotify-status"
   );
 
-
 const spotifyTitle =
   document.getElementById(
     "spotify-title"
   );
-
 
 const spotifyArtist =
   document.getElementById(
     "spotify-artist"
   );
 
-
 const spotifyAlbum =
   document.getElementById(
     "spotify-album"
   );
-
 
 const spotifyProgressFill =
   document.getElementById(
     "spotify-progress-fill"
   );
 
-
 const spotifyPosition =
   document.getElementById(
     "spotify-position"
   );
 
-
 const spotifyDuration =
   document.getElementById(
     "spotify-duration"
   );
-
 
 /*
 ==================================================
@@ -525,10 +396,8 @@ SPOTIFY STATE
 let spotifyState =
   null;
 
-
 let spotifySyncTime =
   performance.now();
-
 
 function formatTime(ms) {
 
@@ -541,23 +410,21 @@ function formatTime(ms) {
 
   }
 
-
   const seconds =
     Math.floor(
-      ms / 1000
+      ms /
+      1000
     );
-
 
   const minutes =
     Math.floor(
-      seconds / 60
+      seconds /
+      60
     );
-
 
   const remaining =
     seconds %
     60;
-
 
   return (
     minutes +
@@ -571,7 +438,6 @@ function formatTime(ms) {
   );
 
 }
-
 
 /*
 ==================================================
@@ -589,13 +455,11 @@ async function updateSpotify() {
 
   }
 
-
   try {
 
     const data =
       await window.spotify
         .getNowPlaying();
-
 
     if (
       !data ||
@@ -605,50 +469,38 @@ async function updateSpotify() {
       spotifyPanel.style.display =
         "none";
 
-
       spotifyState =
         null;
-
 
       return;
 
     }
 
-
     spotifyState =
       data;
-
 
     spotifySyncTime =
       performance.now();
 
-
     spotifyPanel.style.display =
       "flex";
-
 
     spotifyTitle.textContent =
       data.title ||
       "Unknown Song";
 
-
     spotifyArtist.textContent =
       data.artist ||
       "Unknown Artist";
-
 
     spotifyAlbum.textContent =
       data.album ||
       "";
 
-
     spotifyStatus.textContent =
       data.isPlaying
-
         ? "NOW PLAYING"
-
         : "PAUSED";
-
 
     if (
       data.artUrl &&
@@ -661,12 +513,10 @@ async function updateSpotify() {
 
     }
 
-
     spotifyDuration.textContent =
       formatTime(
         data.durationMs
       );
-
 
   } catch (error) {
 
@@ -679,28 +529,55 @@ async function updateSpotify() {
 
 }
 
+/*
+Slightly less frequent metadata polling.
+It does not need to run very often because
+the timer below interpolates locally.
+*/
 
 setInterval(
   updateSpotify,
-  1500
+  2000
 );
-
 
 updateSpotify();
 
-
 /*
 ==================================================
-SMOOTH SPOTIFY TIMER
+SPOTIFY PROGRESS
 ==================================================
 */
 
-function updateSpotifyProgress() {
+let lastSpotifyUiUpdate =
+  0;
+
+function updateSpotifyProgress(
+  time
+) {
 
   requestAnimationFrame(
     updateSpotifyProgress
   );
 
+  /*
+  Updating DOM text 60 times per second is
+  unnecessary.
+
+  Update approximately 10 times per second.
+  */
+
+  if (
+    time -
+    lastSpotifyUiUpdate <
+    100
+  ) {
+
+    return;
+
+  }
+
+  lastSpotifyUiUpdate =
+    time;
 
   if (
     !spotifyState
@@ -710,10 +587,8 @@ function updateSpotifyProgress() {
 
   }
 
-
   let position =
     spotifyState.positionMs;
-
 
   if (
     spotifyState.isPlaying
@@ -725,7 +600,6 @@ function updateSpotifyProgress() {
 
   }
 
-
   position =
     Math.max(
       0,
@@ -735,9 +609,7 @@ function updateSpotifyProgress() {
       )
     );
 
-
   const percentage =
-
     spotifyState.durationMs >
       0
 
@@ -753,17 +625,14 @@ function updateSpotifyProgress() {
 
       0;
 
-
   spotifyProgressFill.style.width =
     percentage +
     "%";
-
 
   spotifyPosition.textContent =
     formatTime(
       position
     );
-
 
   spotifyDuration.textContent =
     formatTime(
@@ -772,9 +641,9 @@ function updateSpotifyProgress() {
 
 }
 
-
-updateSpotifyProgress();
-
+requestAnimationFrame(
+  updateSpotifyProgress
+);
 
 /*
 ==================================================
@@ -785,26 +654,20 @@ AUDIO STATE
 let audioContext =
   null;
 
-
 let pcmNode =
   null;
-
 
 let analyser =
   null;
 
-
 let silentGain =
   null;
-
 
 let removeAudioListener =
   null;
 
-
 let visualizerStarted =
   false;
-
 
 /*
 ==================================================
@@ -821,16 +684,15 @@ function pcm16ToFloat32(
       arrayBuffer
     );
 
-
   const output =
     new Float32Array(
       input.length
     );
 
-
   for (
     let i = 0;
-    i < input.length;
+    i <
+      input.length;
     i++
   ) {
 
@@ -840,11 +702,9 @@ function pcm16ToFloat32(
 
   }
 
-
   return output;
 
 }
-
 
 /*
 ==================================================
@@ -855,7 +715,6 @@ START VISUALIZER
 startButton.onclick =
   async () => {
 
-
   if (
     visualizerStarted
   ) {
@@ -864,12 +723,10 @@ startButton.onclick =
 
   }
 
-
   try {
 
     audioStatus.textContent =
       "Starting live PipeWire capture...";
-
 
     /*
     ==================================================
@@ -888,9 +745,7 @@ startButton.onclick =
 
       });
 
-
     await audioContext.resume();
-
 
     /*
     ==================================================
@@ -902,7 +757,6 @@ startButton.onclick =
       .addModule(
         "./pcm-worklet.js"
       );
-
 
     pcmNode =
       new AudioWorkletNode(
@@ -924,7 +778,6 @@ startButton.onclick =
         }
       );
 
-
     /*
     ==================================================
     ANALYSER
@@ -935,80 +788,60 @@ startButton.onclick =
       audioContext
         .createAnalyser();
 
+    /*
+    PERFORMANCE:
+
+    4096 -> 2048
+
+    Half as many FFT bins.
+    Still more than enough for 48 visual bars.
+    */
 
     analyser.fftSize =
-      4096;
-
-
-    analyser.smoothingTimeConstant =
-      0.55;
-
+      2048;
 
     /*
-    Digital audio does not need the extremely
-    aggressive analog/USB noise settings.
+    Slightly higher smoothing helps a
+    30 FPS visualizer still look fluid.
     */
+
+    analyser.smoothingTimeConstant =
+      0.65;
 
     analyser.minDecibels =
       -95;
 
-
     analyser.maxDecibels =
       -10;
-
 
     /*
     ==================================================
     SILENT OUTPUT
     ==================================================
-
-    An AudioWorklet needs to remain connected
-    to a live AudioContext graph.
-
-    We connect:
-
-    PCM Worklet
-        ↓
-    Analyser
-        ↓
-    zero-volume Gain
-        ↓
-    destination
-
-    Therefore:
-
-    - the analyser receives the music
-    - the browser keeps processing samples
-    - NO second copy of the music is audible
     */
 
     silentGain =
       audioContext
         .createGain();
 
-
     silentGain.gain.value =
       0;
-
 
     pcmNode.connect(
       analyser
     );
 
-
     analyser.connect(
       silentGain
     );
-
 
     silentGain.connect(
       audioContext.destination
     );
 
-
     /*
     ==================================================
-    RECEIVE LIVE PCM
+    RECEIVE PCM
     ==================================================
     */
 
@@ -1024,7 +857,6 @@ startButton.onclick =
                 data
               );
 
-
             pcmNode.port
               .postMessage(
                 {
@@ -1038,10 +870,9 @@ startButton.onclick =
           }
         );
 
-
     /*
     ==================================================
-    ERROR HANDLER
+    ERRORS
     ==================================================
     */
 
@@ -1056,14 +887,12 @@ startButton.onclick =
             message
           );
 
-
           audioStatus.textContent =
             "Audio error: " +
             message;
 
         }
       );
-
 
     /*
     ==================================================
@@ -1074,7 +903,6 @@ startButton.onclick =
     const result =
       await window.systemAudio
         .start();
-
 
     if (
       !result ||
@@ -1087,52 +915,29 @@ startButton.onclick =
 
     }
 
-
     console.log(
       "LIVE AUDIO:",
       result
     );
 
-
     audioStatus.textContent =
       "LIVE • PipeWire system audio";
 
-
     startButton.remove();
-
 
     visualizerStarted =
       true;
 
-
     /*
     ==================================================
-    DATA ARRAYS
+    FREQUENCY DATA
     ==================================================
     */
-
-    const waveform =
-      new Uint8Array(
-        analyser.fftSize
-      );
-
-
-    const smoothWaveform =
-      new Float32Array(
-        analyser.fftSize
-      );
-
-
-    smoothWaveform.fill(
-      128
-    );
-
 
     const spectrum =
       new Uint8Array(
         analyser.frequencyBinCount
       );
-
 
     /*
     ==================================================
@@ -1143,18 +948,14 @@ startButton.onclick =
     let smoothBass =
       0;
 
-
     let smoothMids =
       0;
-
 
     let smoothTreble =
       0;
 
-
     let huePosition =
       0;
-
 
     /*
     ==================================================
@@ -1162,50 +963,59 @@ startButton.onclick =
     ==================================================
     */
 
-    const barCount =
-      64;
+    /*
+    PERFORMANCE:
 
+    64 -> 48 bars.
+
+    Because the bars are mirrored, this means
+    96 rectangles instead of 128 per frame.
+    */
+
+    const barCount =
+      48;
 
     const smoothBars =
-      new Array(
+      new Float32Array(
         barCount
-      ).fill(
-        0
       );
 
+    /*
+    Slower motion settings.
+    */
 
     const barRiseSpeed =
-      0.70;
-
+      0.60;
 
     const barFallSpeed =
-      0.18;
+      0.12;
 
+    /*
+    Maximum screen height occupied by bars.
+    */
+
+    const heightMultiplier =
+      0.58;
 
     /*
     ==================================================
-    WAVEFORM SETTINGS
+    FREQUENCY SETTINGS
     ==================================================
     */
 
-    const waveformSpeed =
-      0.10;
+    const minFreq =
+      45;
 
+    const maxFreq =
+      14000;
 
-    /*
-    ==================================================
-    FREQUENCY HELPER
-    ==================================================
-    */
+    const nyquist =
+      audioContext.sampleRate /
+      2;
 
     function frequencyToBin(
       freq
     ) {
-
-      const nyquist =
-        audioContext.sampleRate /
-        2;
-
 
       return Math.round(
 
@@ -1217,32 +1027,231 @@ startButton.onclick =
 
     }
 
+    /*
+    ==================================================
+    PRECOMPUTE ENERGY BINS
+    ==================================================
+
+    These values never change during playback,
+    so there is no reason to calculate them
+    every frame.
+    */
+
+    const bassStart =
+      frequencyToBin(
+        45
+      );
+
+    const bassEnd =
+      frequencyToBin(
+        250
+      );
+
+    const midEnd =
+      frequencyToBin(
+        4000
+      );
+
+    const trebleEnd =
+      frequencyToBin(
+        12000
+      );
 
     /*
     ==================================================
-    DRAW LOOP
+    PRECOMPUTE BAR FREQUENCY RANGES
+    ==================================================
+
+    Previously Math.pow() and frequencyToBin()
+    ran for every bar, every frame.
+
+    Now they run ONCE.
+    */
+
+    const barRanges =
+      new Array(
+        barCount
+      );
+
+    const centerBoosts =
+      new Float32Array(
+        barCount
+      );
+
+    const centerSensitivityBars =
+      18;
+
+    for (
+      let i = 0;
+      i <
+        barCount;
+      i++
+    ) {
+
+      const fraction1 =
+        i /
+        barCount;
+
+      const fraction2 =
+        (
+          i +
+          1
+        ) /
+        barCount;
+
+      const freq1 =
+        minFreq *
+        Math.pow(
+          maxFreq /
+          minFreq,
+          fraction1
+        );
+
+      const freq2 =
+        minFreq *
+        Math.pow(
+          maxFreq /
+          minFreq,
+          fraction2
+        );
+
+      let startBin =
+        frequencyToBin(
+          freq1
+        );
+
+      let endBin =
+        frequencyToBin(
+          freq2
+        );
+
+      startBin =
+        Math.max(
+          0,
+          startBin
+        );
+
+      endBin =
+        Math.min(
+          spectrum.length -
+            1,
+          endBin
+        );
+
+      if (
+        endBin <=
+        startBin
+      ) {
+
+        endBin =
+          Math.min(
+            spectrum.length -
+              1,
+            startBin +
+              1
+          );
+
+      }
+
+      barRanges[i] = {
+        startBin,
+        endBin
+      };
+
+      /*
+      Center/bass sensitivity.
+      */
+
+      centerBoosts[i] =
+        i <
+          centerSensitivityBars
+
+          ?
+
+          1.10 -
+          (
+            i /
+            centerSensitivityBars
+          ) *
+          0.30
+
+          :
+
+          1.0;
+
+    }
+
+    /*
+    ==================================================
+    DRAW SETTINGS
     ==================================================
     */
 
-    function draw() {
+    let lastFrameTime =
+      0;
 
+    /*
+    PERFORMANCE:
+
+    Cap render at 30 FPS.
+
+    Audio continues running at full rate;
+    only visual drawing is reduced.
+    */
+
+    const targetFPS =
+      30;
+
+    const frameInterval =
+      1000 /
+      targetFPS;
+
+    /*
+    ==================================================
+    DRAW
+    ==================================================
+    */
+
+    function draw(
+      currentTime
+    ) {
 
       requestAnimationFrame(
         draw
       );
 
+      /*
+      FPS limiter.
+      */
 
-      analyser
-        .getByteTimeDomainData(
-          waveform
+      const elapsed =
+        currentTime -
+        lastFrameTime;
+
+      if (
+        elapsed <
+        frameInterval
+      ) {
+
+        return;
+
+      }
+
+      /*
+      Prevent accumulating timing error.
+      */
+
+      lastFrameTime =
+        currentTime -
+        (
+          elapsed %
+          frameInterval
         );
-
 
       analyser
         .getByteFrequencyData(
           spectrum
         );
-
 
       /*
       ==================================================
@@ -1250,41 +1259,14 @@ startButton.onclick =
       ==================================================
       */
 
-      const bassStart =
-        frequencyToBin(
-          45
-        );
-
-
-      const bassEnd =
-        frequencyToBin(
-          250
-        );
-
-
-      const midEnd =
-        frequencyToBin(
-          4000
-        );
-
-
-      const trebleEnd =
-        frequencyToBin(
-          12000
-        );
-
-
       let bass =
         0;
-
 
       let mids =
         0;
 
-
       let treble =
         0;
-
 
       for (
         let i =
@@ -1301,14 +1283,12 @@ startButton.onclick =
 
       }
 
-
       bass /=
         Math.max(
           1,
           bassEnd -
             bassStart
         );
-
 
       for (
         let i =
@@ -1325,14 +1305,12 @@ startButton.onclick =
 
       }
 
-
       mids /=
         Math.max(
           1,
           midEnd -
             bassEnd
         );
-
 
       for (
         let i =
@@ -1349,14 +1327,12 @@ startButton.onclick =
 
       }
 
-
       treble /=
         Math.max(
           1,
           trebleEnd -
             midEnd
         );
-
 
       smoothBass +=
         (
@@ -1365,7 +1341,6 @@ startButton.onclick =
         ) *
         0.12;
 
-
       smoothMids +=
         (
           mids -
@@ -1373,14 +1348,12 @@ startButton.onclick =
         ) *
         0.10;
 
-
       smoothTreble +=
         (
           treble -
           smoothTreble
         ) *
         0.10;
-
 
       /*
       ==================================================
@@ -1393,10 +1366,8 @@ startButton.onclick =
         smoothBass /
         220;
 
-
       huePosition +=
         hueSpeed;
-
 
       if (
         huePosition >=
@@ -1408,7 +1379,6 @@ startButton.onclick =
 
       }
 
-
       const hue =
         (
           huePosition +
@@ -1417,38 +1387,14 @@ startButton.onclick =
         ) %
         360;
 
-
-      const saturation =
-        Math.min(
-          100,
-          70 +
-          smoothMids *
-          0.12
-        );
-
-
-      const lightness =
-        Math.min(
-          72,
-          38 +
-          smoothTreble *
-          0.14
-        );
-
-
-      const dynamicColor =
-        `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-
-
       /*
       ==================================================
-      CLEAR BACKGROUND
+      CLEAR SCREEN
       ==================================================
       */
 
       ctx.fillStyle =
-        "black";
-
+        "#000";
 
       ctx.fillRect(
         0,
@@ -1457,182 +1403,30 @@ startButton.onclick =
         canvas.height
       );
 
-
       /*
       ==================================================
-      WAVEFORM
-      ==================================================
-      */
-
-      const centerY =
-        canvas.height *
-        0.30;
-
-
-      /*
-==================================================
-WAVEFORM SENSITIVITY
-==================================================
-    */
-
-    const waveformSensitivity =
-      2.25;
-
-
-    const amplitudeBoost =
-      1 +
-      smoothBass /
-      220;
-
-
-    const amplitude =
-      canvas.height *
-      0.14 *
-      waveformSensitivity *
-      amplitudeBoost;
-
-
-      const sliceWidth =
-        canvas.width /
-        waveform.length;
-
-
-      const glow =
-        8 +
-        smoothMids /
-        4;
-
-
-      ctx.lineWidth =
-        2.0 +
-        smoothBass /
-        300;
-
-
-      ctx.strokeStyle =
-        dynamicColor;
-
-
-      ctx.shadowColor =
-        dynamicColor;
-
-
-      ctx.shadowBlur =
-        glow;
-
-
-      ctx.beginPath();
-
-
-      let x =
-        0;
-
-
-      for (
-        let i = 0;
-        i <
-          waveform.length;
-        i++
-      ) {
-
-
-        smoothWaveform[i] +=
-          (
-            waveform[i] -
-            smoothWaveform[i]
-          ) *
-          waveformSpeed;
-
-
-        const normalized =
-          (
-            smoothWaveform[i] -
-            128
-          ) /
-          128;
-
-
-        const y =
-          centerY +
-          normalized *
-          amplitude;
-
-
-        if (
-          i === 0
-        ) {
-
-          ctx.moveTo(
-            x,
-            y
-          );
-
-        } else {
-
-          ctx.lineTo(
-            x,
-            y
-          );
-
-        }
-
-
-        x +=
-          sliceWidth;
-
-      }
-
-
-      ctx.stroke();
-
-
-      /*
-      Waveform highlight.
-      */
-
-      ctx.shadowBlur =
-        0;
-
-
-      ctx.lineWidth =
-        0.8;
-
-
-      ctx.strokeStyle =
-        `hsl(${hue}, 100%, 78%)`;
-
-
-      ctx.stroke();
-
-
-      /*
-      ==================================================
-      CENTERED SPECTRUM
+      GEOMETRY
       ==================================================
       */
 
       const centerX =
-        canvas.width /
-        2;
-
+        canvas.width *
+        0.5;
 
       const halfWidth =
-        canvas.width /
-        2;
-
+        canvas.width *
+        0.5;
 
       const barWidth =
         halfWidth /
         barCount;
 
-
-      const minFreq =
-        45;
-
-
-      const maxFreq =
-        14000;
-
+      const actualBarWidth =
+        Math.max(
+          1,
+          barWidth -
+            2
+        );
 
       /*
       ==================================================
@@ -1647,120 +1441,54 @@ WAVEFORM SENSITIVITY
         i++
       ) {
 
-
-        const fraction1 =
-          i /
-          barCount;
-
-
-        const fraction2 =
-          (
-            i + 1
-          ) /
-          barCount;
-
-
-        const freq1 =
-          minFreq *
-          Math.pow(
-            maxFreq /
-            minFreq,
-            fraction1
-          );
-
-
-        const freq2 =
-          minFreq *
-          Math.pow(
-            maxFreq /
-            minFreq,
-            fraction2
-          );
-
-
-        let startBin =
-          frequencyToBin(
-            freq1
-          );
-
-
-        let endBin =
-          frequencyToBin(
-            freq2
-          );
-
-
-        startBin =
-          Math.max(
-            0,
-            startBin
-          );
-
-
-        endBin =
-          Math.min(
-            spectrum.length -
-              1,
-            endBin
-          );
-
-
-        if (
-          endBin <=
-          startBin
-        ) {
-
-          endBin =
-            Math.min(
-              spectrum.length -
-                1,
-              startBin +
-                1
-            );
-
-        }
-
+        const range =
+          barRanges[i];
 
         let value =
           0;
 
+        /*
+        Find strongest FFT bin inside
+        this precomputed frequency band.
+        */
 
         for (
           let j =
-            startBin;
+            range.startBin;
 
           j <=
-            endBin;
+            range.endBin;
 
           j++
         ) {
 
-          value =
-            Math.max(
-              value,
-              spectrum[j]
-            );
+          const sample =
+            spectrum[j];
+
+          if (
+            sample >
+            value
+          ) {
+
+            value =
+              sample;
+
+          }
 
         }
 
-
         /*
         ==================================================
-        DIGITAL NOISE GATE
+        SENSITIVITY
         ==================================================
-
-        Much lighter than the previous
-        microphone/USB noise gate.
         */
 
         const noiseGate =
-          0.025;
-
+          0.015;
 
         let normalized =
           value /
           255;
-
 
         if (
           normalized <
@@ -1782,29 +1510,30 @@ WAVEFORM SENSITIVITY
               noiseGate
             );
 
-
           normalized =
             Math.pow(
               normalized,
-              0.58
+              0.48
             );
+
+          normalized *=
+            centerBoosts[i];
 
         }
 
+        if (
+          normalized >
+          1
+        ) {
 
-        normalized =
-          Math.min(
-            1,
-            Math.max(
-              0,
-              normalized
-            )
-          );
+          normalized =
+            1;
 
+        }
 
         /*
         ==================================================
-        BAR SMOOTHING
+        SMOOTHING
         ==================================================
         */
 
@@ -1831,7 +1560,6 @@ WAVEFORM SENSITIVITY
 
         }
 
-
         if (
           smoothBars[i] <
           0.003
@@ -1842,10 +1570,8 @@ WAVEFORM SENSITIVITY
 
         }
 
-
         const displayedValue =
           smoothBars[i];
-
 
         /*
         ==================================================
@@ -1856,12 +1582,11 @@ WAVEFORM SENSITIVITY
         const height =
           displayedValue *
           canvas.height *
-          0.38;
-
+          heightMultiplier;
 
         /*
         ==================================================
-        BAR COLOR
+        COLOR
         ==================================================
         */
 
@@ -1875,34 +1600,38 @@ WAVEFORM SENSITIVITY
           ) %
           360;
 
-
         const barLightness =
           35 +
           displayedValue *
           35;
 
-
         const barColor =
           `hsl(${barHue}, 95%, ${barLightness}%)`;
-
 
         ctx.fillStyle =
           barColor;
 
+        /*
+        PERFORMANCE:
+
+        Previous glow:
+
+        4 + displayedValue * 18
+
+        New glow is dramatically cheaper.
+        */
 
         ctx.shadowColor =
           barColor;
 
-
         ctx.shadowBlur =
-          4 +
+          2 +
           displayedValue *
-          18;
-
+          6;
 
         /*
         ==================================================
-        MIRRORED POSITIONS
+        MIRRORED POSITION
         ==================================================
         */
 
@@ -1910,57 +1639,54 @@ WAVEFORM SENSITIVITY
           i *
           barWidth;
 
-
         const rightX =
           centerX +
           offset;
-
 
         const leftX =
           centerX -
           offset -
           barWidth;
 
-
         const y =
           canvas.height -
           height;
 
-
         ctx.fillRect(
           rightX,
           y,
-          Math.max(
-            1,
-            barWidth -
-              2
-          ),
+          actualBarWidth,
           height
         );
-
 
         ctx.fillRect(
           leftX,
           y,
-          Math.max(
-            1,
-            barWidth -
-              2
-          ),
+          actualBarWidth,
           height
         );
 
       }
 
+      /*
+      Disable shadow before next clear.
+      */
 
       ctx.shadowBlur =
         0;
 
     }
 
+    /*
+    IMPORTANT:
 
-    draw();
+    Start the first frame correctly with
+    a requestAnimationFrame timestamp.
+    */
 
+    requestAnimationFrame(
+      draw
+    );
 
   } catch (error) {
 
@@ -1968,10 +1694,8 @@ WAVEFORM SENSITIVITY
       error
     );
 
-
     audioStatus.textContent =
       "Could not start live audio";
-
 
     alert(
       "Could not start live system audio.\n\n" +
@@ -1982,10 +1706,9 @@ WAVEFORM SENSITIVITY
 
 };
 
-
 /*
 ==================================================
-STOP ON PAGE EXIT
+STOP ON EXIT
 ==================================================
 */
 
@@ -2001,7 +1724,6 @@ window.addEventListener(
 
     }
 
-
     if (
       window.systemAudio
     ) {
@@ -2014,9 +1736,7 @@ window.addEventListener(
   }
 );
 
-
 </script>
 
 </body>
-
 </html>
